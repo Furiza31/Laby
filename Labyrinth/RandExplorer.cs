@@ -9,43 +9,63 @@ namespace Labyrinth
     {
         private readonly ICrawler _crawler = crawler;
         private readonly IEnumRandomizer<Actions> _rnd = rnd;
-        
+
         public enum Actions
         {
             TurnLeft,
             Walk
         }
 
-        public int GetOut(int n)
+        public async Task<int> GetOutAsync(int n)
         {
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(n, 0, "n must be strictly positive");
-            MyInventory bag = new ();
+            MyInventory bag = new();
 
-            for( ; n > 0 && _crawler.FacingTile is not Outside; n--)
+            while (n > 0)
             {
+                var facingType = await _crawler.GetFacingTileTypeAsync();
+
+                if (facingType == typeof(Outside))
+                {
+                    break;
+                }
+
                 EventHandler<CrawlingEventArgs>? changeEvent;
 
-                if (_crawler.FacingTile.IsTraversable
-                    && _rnd.Next() == Actions.Walk)
-                {
-                    var roomContent = _crawler.Walk();
+                var shouldWalk =
+                    facingType != typeof(Wall) &&
+                    facingType != typeof(Outside) &&
+                    _rnd.Next() == Actions.Walk;
 
-                    while(roomContent.HasItems)
+                if (shouldWalk)
+                {
+                    var walkResult = await _crawler.TryWalkAsync(bag);
+
+                    if (walkResult.Success)
                     {
-                        bag.MoveItemFrom(roomContent);
+                        if (walkResult.Inventory is { } roomContent)
+                        {
+                            while (await bag.TryMoveItemFromAsync(roomContent))
+                            {
+                                ;
+                            }
+                        }
+                        changeEvent = PositionChanged;
                     }
-                    changeEvent = PositionChanged;
+                    else
+                    {
+                        _crawler.Direction.TurnLeft();
+                        changeEvent = DirectionChanged;
+                    }
+
                 }
                 else
                 {
                     _crawler.Direction.TurnLeft();
                     changeEvent = DirectionChanged;
                 }
-                if (_crawler.FacingTile is Door door && door.IsLocked)
-                {
-                    while(bag.HasItems && !door.Open(bag))
-                        ;
-                }
+
+                n--;
                 changeEvent?.Invoke(this, new CrawlingEventArgs(_crawler));
             }
             return n;

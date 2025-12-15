@@ -7,25 +7,31 @@ namespace LabyrinthTest.Crawl;
 [TestFixture(Description = "Integration test for the crawler implementation in the labyrinth")]
 public class LabyrinthCrawlerTest
 {
-    private static ICrawler 
-        
-        NewCrawlerFor(string ascii_map) =>
+    private static ICrawler NewCrawlerFor(string ascii_map) =>
         new Labyrinth.Labyrinth(ascii_map).NewCrawler();
 
-    private static void AssertThat(ICrawler test, int x, int y, Direction dir, Type facingTile)
+    private static async Task AssertThatAsync(ICrawler test, int x, int y, Direction dir, Type facingTile)
     {
         using var all = Assert.EnterMultipleScope();
 
         Assert.That(test.X, Is.EqualTo(x));
         Assert.That(test.Y, Is.EqualTo(y));
         Assert.That(test.Direction, Is.EqualTo(dir));
-        Assert.That(test.FacingTile, Is.TypeOf(facingTile));
+        Assert.That(await test.GetFacingTileTypeAsync(), Is.EqualTo(facingTile));
+    }
+
+    private static async Task DrainAsync(MyInventory target, Inventory source)
+    {
+        while (await target.TryMoveItemFromAsync(source))
+        {
+            ;
+        }
     }
 
     #region Initialization
     [Test]
-    public void InitWithCenteredX() =>
-        AssertThat(
+    public async Task InitWithCenteredX() =>
+        await AssertThatAsync(
             NewCrawlerFor("""
                 +--+
                 | x|
@@ -38,8 +44,8 @@ public class LabyrinthCrawlerTest
         );
 
     [Test]
-    public void InitWithMultipleXUsesLastOne() =>
-        AssertThat(
+    public async Task InitWithMultipleXUsesLastOne() =>
+        await AssertThatAsync(
             NewCrawlerFor("""
                 +--+
                 | x|
@@ -66,8 +72,8 @@ public class LabyrinthCrawlerTest
 
     #region Labyrinth borders
     [Test]
-    public void FacingNorthOnUpperTileReturnsOutside() =>
-         AssertThat(
+    public async Task FacingNorthOnUpperTileReturnsOutside() =>
+         await AssertThatAsync(
             NewCrawlerFor("""
                 +x+
                 | |
@@ -80,7 +86,7 @@ public class LabyrinthCrawlerTest
         );
 
     [Test]
-    public void FacingWestOnFarLeftTileReturnsOutside()
+    public async Task FacingWestOnFarLeftTileReturnsOutside()
     {
         var test = NewCrawlerFor("""
             +-+
@@ -89,7 +95,7 @@ public class LabyrinthCrawlerTest
             """
         );
         test.Direction.TurnLeft();
-        AssertThat(test,
+        await AssertThatAsync(test,
             x: 0, y: 1,
             Direction.West,
             typeof(Outside)
@@ -97,7 +103,7 @@ public class LabyrinthCrawlerTest
     }
 
     [Test]
-    public void FacingEastOnFarRightTileReturnsOutside()
+    public async Task FacingEastOnFarRightTileReturnsOutside()
     {
         var test = NewCrawlerFor("""
             +-+
@@ -106,7 +112,7 @@ public class LabyrinthCrawlerTest
             """
         );
         test.Direction.TurnRight();
-        AssertThat(test,
+        await AssertThatAsync(test,
             x: 2, y: 1,
             Direction.East,
             typeof(Outside)
@@ -114,7 +120,7 @@ public class LabyrinthCrawlerTest
     }
 
     [Test]
-    public void FacingSouthOnBottomTileReturnsOutside()
+    public async Task FacingSouthOnBottomTileReturnsOutside()
     {
         var test = NewCrawlerFor("""
             +-+
@@ -124,7 +130,7 @@ public class LabyrinthCrawlerTest
         );
         test.Direction.TurnLeft();
         test.Direction.TurnLeft();
-        AssertThat(test,
+        await AssertThatAsync(test,
             x: 1, y: 2,
             Direction.South,
             typeof(Outside)
@@ -134,7 +140,7 @@ public class LabyrinthCrawlerTest
 
     #region Moves
     [Test]
-    public void TurnLeftFacesWestTile()
+    public async Task TurnLeftFacesWestTile()
     {
         var test = NewCrawlerFor("""
             +---+
@@ -143,14 +149,14 @@ public class LabyrinthCrawlerTest
             """
         );
         test.Direction.TurnLeft();
-        AssertThat(test,
+        await AssertThatAsync(test,
             x: 2, y: 1,
             Direction.West,
             typeof(Door)
         );
     }
     [Test]
-    public void WalkReturnsInventoryAndChangesPositionAndFacingTile()
+    public async Task WalkReturnsInventoryAndChangesPositionAndFacingTile()
     {
         var test = NewCrawlerFor("""
             +/-+
@@ -159,10 +165,12 @@ public class LabyrinthCrawlerTest
             +--+
             """
         );
-        var inventory = test.Walk();
+        var walkResult = await test.TryWalkAsync(new MyInventory());
 
-        Assert.That(inventory.HasItems, Is.False);
-        AssertThat(test,
+        Assert.That(walkResult.Success, Is.True);
+        Assert.That(walkResult.Inventory, Is.Not.Null);
+        Assert.That(walkResult.Inventory!.HasItems, Is.False);
+        await AssertThatAsync(test,
             x: 1, y: 1,
             Direction.North,
             typeof(Door)
@@ -170,7 +178,7 @@ public class LabyrinthCrawlerTest
     }
 
     [Test]
-    public void TurnAndWalkReturnsInventoryChangesPositionAndFacingTile()
+    public async Task TurnAndWalkReturnsInventoryChangesPositionAndFacingTile()
     {
         var test = NewCrawlerFor("""
             +--+
@@ -180,10 +188,12 @@ public class LabyrinthCrawlerTest
         );
         test.Direction.TurnRight();
 
-        var inventory = test.Walk();
+        var walkResult = await test.TryWalkAsync(new MyInventory());
 
-        Assert.That(inventory.HasItems, Is.False);
-        AssertThat(test,
+        Assert.That(walkResult.Success, Is.True);
+        Assert.That(walkResult.Inventory, Is.Not.Null);
+        Assert.That(walkResult.Inventory!.HasItems, Is.False);
+        await AssertThatAsync(test,
             x: 2, y: 1,
             Direction.East,
             typeof(Wall)
@@ -191,7 +201,7 @@ public class LabyrinthCrawlerTest
     }
 
     [Test]
-    public void WalkOnNonTraversableTileThrowsInvalidOperationExceptionAndDontMove()
+    public async Task WalkOnNonTraversableTileFailsAndDontMove()
     {
         var test = NewCrawlerFor("""
             +--+
@@ -200,8 +210,10 @@ public class LabyrinthCrawlerTest
             +--+
             """
         );
-        Assert.Throws<InvalidOperationException>(() => test.Walk());
-        AssertThat(test,
+        var result = await test.TryWalkAsync(new MyInventory());
+
+        Assert.That(result.Success, Is.False);
+        await AssertThatAsync(test,
             x: 1, y: 2,
             Direction.North,
             typeof(Door)
@@ -209,7 +221,7 @@ public class LabyrinthCrawlerTest
     }
 
     [Test]
-    public void WalkOutsideThrowsInvalidOperationExceptionAndDontMove()
+    public async Task WalkOutsideFailsAndDontMove()
     {
         var test = NewCrawlerFor("""
             |x|
@@ -217,8 +229,10 @@ public class LabyrinthCrawlerTest
             +-+
             """
         );
-        Assert.Throws<InvalidOperationException>(() => test.Walk());
-        AssertThat(test,
+        var result = await test.TryWalkAsync(new MyInventory());
+
+        Assert.That(result.Success, Is.False);
+        await AssertThatAsync(test,
             x: 1, y: 0,
             Direction.North,
             typeof(Outside)
@@ -228,7 +242,7 @@ public class LabyrinthCrawlerTest
 
     #region Items and doors
     [Test]
-    public void WalkInARoomWithAnItem()
+    public async Task WalkInARoomWithAnItem()
     {
         var test = NewCrawlerFor("""
         +---+
@@ -237,58 +251,74 @@ public class LabyrinthCrawlerTest
         +---+
         """
         );
-        var inventory = test.Walk();
+        var result = await test.TryWalkAsync(new MyInventory());
 
         using var all = Assert.EnterMultipleScope();
 
-        Assert.That(inventory.HasItems, Is.True);
-        Assert.That(inventory.ItemTypes.First(), Is.EqualTo(typeof(Key)));
+        Assert.That(result.Success, Is.True);
+        var itemTypes = await result.Inventory!.ListItemTypesAsync();
+        Assert.That(itemTypes.First(), Is.EqualTo(typeof(Key)));
     }
 
     [Test]
-    public void WalkUseAWrongKeyToOpenADoor()
+    public async Task WalkUseAWrongKeyToOpenADoor()
     {
         var test = NewCrawlerFor("""
-            +---+
-            |/ k|
-            |k  |
-            |x /|
-            +---+
+            +----+
+            |xk /|
+            | /k |
+            +----+
             """);
-        var inventory = test.Walk();
-        var door = (Door)test.FacingTile;
 
-        Assert.That(door.Open(inventory), Is.False);
-        Assert.That(door.IsLocked, Is.True);
-        Assert.That(door.IsTraversable, Is.False);
-        Assert.That(inventory.HasItems, Is.True);
-    }
-
-    [Test]
-    public void WalkUseKeyToOpenADoorAndPass()
-    {
-        var laby = new Labyrinth.Labyrinth("""
-                +--+
-                |xk|
-                +-/|
-                """);
-        var test = laby.NewCrawler();
+        var bag = new MyInventory();
 
         test.Direction.TurnRight();
-
-        var inventory = test.Walk();
+        var keyRoom = await test.TryWalkAsync(bag);
+        Assert.That(keyRoom.Success, Is.True);
+        await DrainAsync(bag, keyRoom.Inventory!);
 
         test.Direction.TurnRight();
-        ((Door)test.FacingTile).Open(inventory);
-
-        test.Walk();
+        var doorResult = await test.TryWalkAsync(bag);
 
         using var all = Assert.EnterMultipleScope();
 
-        Assert.That(test.X, Is.EqualTo(2));
-        Assert.That(test.Y, Is.EqualTo(2));
-        Assert.That(test.Direction, Is.EqualTo(Direction.South));
-        Assert.That(test.FacingTile, Is.TypeOf<Outside>());
+        Assert.That(doorResult.Success, Is.False);
+        Assert.That(bag.HasItems, Is.True);
+        await AssertThatAsync(test,
+            x: 2, y: 1,
+            Direction.South,
+            typeof(Door)
+        );
+    }
+
+    [Test]
+    public async Task WalkUseKeyToOpenADoorAndPass()
+    {
+        var test = NewCrawlerFor("""
+                +---+
+                |xk/|
+                +---+
+                """);
+
+        var bag = new MyInventory();
+
+        test.Direction.TurnRight();
+        var keyRoom = await test.TryWalkAsync(bag);
+        await DrainAsync(bag, keyRoom.Inventory!);
+
+        var doorPass = await test.TryWalkAsync(bag);
+
+        using var all = Assert.EnterMultipleScope();
+
+        await DrainAsync(bag, doorPass.Inventory!);
+
+        Assert.That(doorPass.Success, Is.True);
+        Assert.That(bag.HasItems, Is.True);
+        await AssertThatAsync(test,
+            x: 3, y: 1,
+            Direction.East,
+            typeof(Wall)
+        );
     }
     #endregion
 }

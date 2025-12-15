@@ -6,9 +6,9 @@
     /// <param name="item">Optional initial item in the inventory.</param>
     public abstract class Inventory
     {
-        protected Inventory(ICollectable? item = null) 
+        protected Inventory(ICollectable? item = null)
         {
-            if(item is not null)
+            if (item is not null)
             {
                 _items.Add(item);
             }
@@ -17,12 +17,18 @@
         /// <summary>
         /// True if the room has an items, false otherwise.
         /// </summary>
-        public bool HasItems => _items.Count>0;
+        public bool HasItems => _items.Count > 0;
 
         /// <summary>
         /// Gets the type of the item in the room.
         /// </summary>
         public IEnumerable<Type> ItemTypes => _items.Select(item => item.GetType());
+
+        /// <summary>
+        /// Asynchronously list the item types currently in the inventory.
+        /// </summary>
+        public Task<IEnumerable<Type>> ListItemTypesAsync() =>
+            Task.FromResult<IEnumerable<Type>>([.. ItemTypes]);
 
         /// <summary>
         /// Places an item in the inventory, removing it from another one.
@@ -39,6 +45,23 @@
             from._items.RemoveAt(nth);
         }
 
-        protected IList<ICollectable> _items = new List<ICollectable>();
+        /// <summary>
+        /// Asynchronously try to move an item from another inventory.
+        /// </summary>
+        /// <param name="from">Source inventory.</param>
+        /// <param name="nth">Index of the item to move.</param>
+        /// <returns>True if the item was moved, false if the source inventory changed.</returns>
+        public Task<bool> TryMoveItemFromAsync(Inventory from, int nth = 0)
+        {
+            if (nth < 0 || nth >= from._items.Count)
+            {
+                return Task.FromResult(false);
+            }
+
+            MoveItemFrom(from, nth);
+            return Task.FromResult(true);
+        }
+
+        protected IList<ICollectable> _items = [];
     }
 }

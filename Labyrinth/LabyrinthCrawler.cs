@@ -12,35 +12,61 @@ namespace Labyrinth
 
             public int Y => _y;
 
-            public Tile FacingTile => ProcessFacingTile((x, y, tile) => tile);
+            public Task<Type> GetFacingTileTypeAsync()
+            {
+                var (_, _, tile) = GetFacingTile();
+
+                return Task.FromResult(tile.GetType());
+            }
 
             Direction ICrawler.Direction => _direction;
 
-            public Inventory Walk() => 
-                ProcessFacingTile((facingX, facingY, tile) => 
-                {
-                    var inventory = tile.Pass();
+            public async Task<WalkResult> TryWalkAsync(Inventory crawlerInventory)
+            {
+                var (facingX, facingY, tile) = GetFacingTile();
 
-                    _x = facingX;
-                    _y = facingY;
-                    return inventory;
-                });
+                if (tile is Wall || tile is Outside)
+                {
+                    return new WalkResult(false, null);
+                }
+
+                if (tile is Door door && door.IsLocked)
+                {
+                    var opened = await door.OpenAsync(crawlerInventory);
+
+                    if (!opened)
+                    {
+                        return new WalkResult(false, null);
+                    }
+                }
+
+                if (!tile.IsTraversable)
+                {
+                    return new WalkResult(false, null);
+                }
+
+                var inventory = tile.Pass();
+
+                _x = facingX;
+                _y = facingY;
+                return new WalkResult(true, inventory);
+            }
 
             private bool IsOut(int pos, int dimension) =>
                 pos < 0 || pos >= _tiles.GetLength(dimension);
 
-            private T ProcessFacingTile<T>(Func<int, int, Tile, T> process)
+            private (int X, int Y, Tile Tile) GetFacingTile()
             {
                 int facingX = _x + _direction.DeltaX,
                     facingY = _y + _direction.DeltaY;
 
-                return process(
-                    facingX, facingY,
+                var tile =
                     IsOut(facingX, dimension: 0) ||
                     IsOut(facingY, dimension: 1)
                         ? Outside.Singleton
-                        : _tiles[facingX, facingY]
-                 );
+                        : _tiles[facingX, facingY];
+
+                return (facingX, facingY, tile);
             }
 
             private int _x = x;
