@@ -342,16 +342,16 @@ public class ExplorerTest
             """,
             out var events,
             MoveAction.Walk,// key
-                             // auto turn left
+                            // auto turn left
             MoveAction.Walk,// key 
             MoveAction.Walk,// key
-                             // auto turn left
+                            // auto turn left
             MoveAction.Walk,// door
             MoveAction.Walk,
             // auto turn left
             MoveAction.Walk,
             MoveAction.Walk,// door
-                             // auto turn left
+                            // auto turn left
             MoveAction.TurnLeft,
             MoveAction.TurnLeft,
             MoveAction.Walk // door
