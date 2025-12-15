@@ -1,4 +1,5 @@
 ﻿using Labyrinth.Items;
+using Labyrinth.Tiles;
 
 namespace Labyrinth.Crawl
 {
@@ -23,9 +24,9 @@ namespace Labyrinth.Crawl
         Direction Direction { get; }
 
         /// <summary>
-        /// Gets the type of the tile in front of the crawler.
+        /// Gets the tile in front of the crawler.
         /// </summary>
-        Task<Type> GetFacingTileTypeAsync();
+        Task<Tile> GetFacingTileAsync();
 
         /// <summary>
         /// Pass the tile in front of the crawler and move into it.

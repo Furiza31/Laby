@@ -1,8 +1,7 @@
 ﻿using Labyrinth;
 using Labyrinth.Crawl;
+using Labyrinth.Navigation;
 using Labyrinth.Sys;
-using Moq;
-using static Labyrinth.RandExplorer;
 
 namespace LabyrinthTest;
 
@@ -10,41 +9,50 @@ public class ExplorerTest
 {
     private class ExplorerEventsCatcher
     {
-        public ExplorerEventsCatcher(RandExplorer explorer)
+        public ExplorerEventsCatcher(IExplorator explorer)
         {
             explorer.PositionChanged += (s, e) => CatchEvent(ref _positionChangedCount, e);
             explorer.DirectionChanged += (s, e) => CatchEvent(ref _directionChangedCount, e);
         }
+
         public int PositionChangedCount => _positionChangedCount;
         public int DirectionChangedCount => _directionChangedCount;
 
-        public (int X, int Y, Direction Dir)? LastArgs { get; private set; } = null;
+        public (int X, int Y, Direction Dir)? LastArgs { get; private set; }
 
         private void CatchEvent(ref int counter, CrawlingEventArgs e)
         {
             counter++;
             LastArgs = (e.X, e.Y, e.Direction);
         }
-        private int _directionChangedCount = 0, _positionChangedCount = 0;
+
+        private int _directionChangedCount;
+        private int _positionChangedCount;
     }
 
-    private static RandExplorer NewExplorerFor(
-            string labyrinth,
-            out ExplorerEventsCatcher events,
-            params Actions[] actions
-        )
+    private class QueueStrategy : IMovementStrategy
+    {
+        private readonly Queue<MoveAction> _actions;
+
+        public QueueStrategy(IEnumerable<MoveAction> actions) =>
+            _actions = new Queue<MoveAction>(actions);
+
+        public Task<MoveAction> NextActionAsync(ICrawler crawler, Labyrinth.Items.Inventory bag) =>
+            Task.FromResult(_actions.Count == 0 ? MoveAction.TurnLeft : _actions.Dequeue());
+    }
+
+    private static IExplorator NewExplorerFor(
+        string labyrinth,
+        out ExplorerEventsCatcher events,
+        params MoveAction[] actions
+    )
     {
         var laby = new Labyrinth.Labyrinth(labyrinth);
-        var mockRnd = new Mock<IEnumRandomizer<Actions>>();
+        var strategy = new QueueStrategy(actions);
 
-        var queue = new Queue<Actions>(actions);
-
-        mockRnd.Setup(r => r.Next()).Returns(
-            () => queue.Count == 0 ? Actions.TurnLeft : queue.Dequeue()
-        );
-        var explorer = new RandExplorer(
+        var explorer = new Explorator(
             laby.NewCrawler(),
-            mockRnd.Object
+            strategy
         );
         events = new ExplorerEventsCatcher(explorer);
         return explorer;
@@ -137,7 +145,7 @@ public class ExplorerTest
             --+
             """,
             out var events,
-            Actions.TurnLeft
+            MoveAction.TurnLeft
         );
 
         var left = await test.GetOutAsync(nbTries);
@@ -158,8 +166,8 @@ public class ExplorerTest
             | x |
             """,
             out var events,
-            Actions.TurnLeft,
-            Actions.TurnLeft
+            MoveAction.TurnLeft,
+            MoveAction.TurnLeft
         );
 
         var left = await test.GetOutAsync(nbTries);
@@ -180,7 +188,7 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk
+            MoveAction.Walk
         );
 
         var left = await test.GetOutAsync(nbTries);
@@ -202,8 +210,8 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk,
-            Actions.Walk
+            MoveAction.Walk,
+            MoveAction.Walk
         );
 
         var left = await test.GetOutAsync(nbTries);
@@ -227,15 +235,15 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk,
-            Actions.Walk,
+            MoveAction.Walk,
+            MoveAction.Walk,
             // auto turn left
-            Actions.TurnLeft,
-            Actions.TurnLeft,
-            Actions.Walk,
-            Actions.Walk,
+            MoveAction.TurnLeft,
+            MoveAction.TurnLeft,
+            MoveAction.Walk,
+            MoveAction.Walk,
             // auto turn left
-            Actions.Walk
+            MoveAction.Walk
         );
 
         var left = await test.GetOutAsync(nbTries);
@@ -257,8 +265,8 @@ public class ExplorerTest
             +---+
             """,
             out var events,
-            Actions.Walk,
-            Actions.Walk
+            MoveAction.Walk,
+            MoveAction.Walk
         );
         var left = await test.GetOutAsync(nbTries);
 
@@ -281,13 +289,13 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk, // key
-                          // auto turn left
-            Actions.Walk, // door
-            Actions.Walk,
+            MoveAction.Walk, // key
+                             // auto turn left
+            MoveAction.Walk, // door
+            MoveAction.Walk,
             // auto turn left
-            Actions.Walk, // key
-            Actions.Walk  // door
+            MoveAction.Walk, // key
+            MoveAction.Walk  // door
         );
         var left = await test.GetOutAsync(nbTries);
 
@@ -308,10 +316,10 @@ public class ExplorerTest
             +--+
             """,
             out var events,
-            Actions.Walk,// key
-            Actions.Walk,
-            Actions.Walk,// swap keys
-            Actions.Walk // door
+            MoveAction.Walk,// key
+            MoveAction.Walk,
+            MoveAction.Walk,// swap keys
+            MoveAction.Walk // door
         );
         var left = await test.GetOutAsync(nbTries);
 
@@ -333,20 +341,20 @@ public class ExplorerTest
             +---+
             """,
             out var events,
-            Actions.Walk,// key
-                         // auto turn left
-            Actions.Walk,// key 
-            Actions.Walk,// key
-                         // auto turn left
-            Actions.Walk,// door
-            Actions.Walk,
+            MoveAction.Walk,// key
+                             // auto turn left
+            MoveAction.Walk,// key 
+            MoveAction.Walk,// key
+                             // auto turn left
+            MoveAction.Walk,// door
+            MoveAction.Walk,
             // auto turn left
-            Actions.Walk,
-            Actions.Walk,// door
-                         // auto turn left
-            Actions.TurnLeft,
-            Actions.TurnLeft,
-            Actions.Walk // door
+            MoveAction.Walk,
+            MoveAction.Walk,// door
+                             // auto turn left
+            MoveAction.TurnLeft,
+            MoveAction.TurnLeft,
+            MoveAction.Walk // door
         );
         var left = await test.GetOutAsync(nbTries);
 
@@ -355,5 +363,4 @@ public class ExplorerTest
         Assert.That(events.PositionChangedCount, Is.EqualTo(7));
         Assert.That(events.LastArgs, Is.EqualTo((1, 3, Direction.West)));
     }
-
 }

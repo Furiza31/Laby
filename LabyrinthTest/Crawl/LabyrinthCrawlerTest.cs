@@ -10,14 +10,14 @@ public class LabyrinthCrawlerTest
     private static ICrawler NewCrawlerFor(string ascii_map) =>
         new Labyrinth.Labyrinth(ascii_map).NewCrawler();
 
-    private static async Task AssertThatAsync(ICrawler test, int x, int y, Direction dir, Type facingTile)
+    private static async Task AssertThatAsync(ICrawler test, int x, int y, Direction dir, Type facingTileType)
     {
         using var all = Assert.EnterMultipleScope();
 
         Assert.That(test.X, Is.EqualTo(x));
         Assert.That(test.Y, Is.EqualTo(y));
         Assert.That(test.Direction, Is.EqualTo(dir));
-        Assert.That(await test.GetFacingTileTypeAsync(), Is.EqualTo(facingTile));
+        Assert.That(await test.GetFacingTileAsync(), Is.TypeOf(facingTileType));
     }
 
     private static async Task DrainAsync(MyInventory target, Inventory source)
