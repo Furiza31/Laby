@@ -12,11 +12,11 @@ namespace Labyrinth
 
             public int Y => _y;
 
-            public Task<Type> GetFacingTileTypeAsync()
+            public Task<Tile> GetFacingTileAsync()
             {
                 var (_, _, tile) = GetFacingTile();
 
-                return Task.FromResult(tile.GetType());
+                return Task.FromResult(tile);
             }
 
             Direction ICrawler.Direction => _direction;
