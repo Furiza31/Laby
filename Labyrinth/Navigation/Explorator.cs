@@ -18,15 +18,12 @@ namespace Labyrinth.Navigation
 
             var bag = new MyInventory();
 
-            while (n > 0)
-            {
+            for (
                 var facingTile = await _crawler.GetFacingTileAsync();
-
-                if (facingTile is Outside)
-                {
-                    break;
-                }
-
+                n > 0 && facingTile is not Outside;
+                n--, facingTile = await _crawler.GetFacingTileAsync()
+            )
+            {
                 EventHandler<CrawlingEventArgs>? changeEvent;
 
                 if (facingTile is Wall)
@@ -44,8 +41,6 @@ namespace Labyrinth.Navigation
                         _ => throw new InvalidOperationException("Unknown MoveAction")
                     };
                 }
-
-                n--;
                 changeEvent?.Invoke(this, new CrawlingEventArgs(_crawler));
             }
 
