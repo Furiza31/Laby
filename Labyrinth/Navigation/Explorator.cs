@@ -41,6 +41,10 @@ namespace Labyrinth.Navigation
                         _ => throw new InvalidOperationException("Unknown MoveAction")
                     };
                 }
+                if (facingTile is Door door && door.IsLocked)
+                {
+                    TryOpenDoor(door, bag);
+                }
                 changeEvent?.Invoke(this, new CrawlingEventArgs(_crawler));
             }
 
@@ -68,6 +72,11 @@ namespace Labyrinth.Navigation
 
             _crawler.Direction.TurnLeft();
             return DirectionChanged;
+        }
+
+        private static async void TryOpenDoor(Door door, MyInventory bag)
+        {
+            while (bag.HasItems && !await door.OpenAsync(bag)) ;
         }
 
         public event EventHandler<CrawlingEventArgs>? PositionChanged;

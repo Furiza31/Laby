@@ -29,9 +29,6 @@ namespace Labyrinth.Tiles
         /// <returns>True if the key opens the door, false otherwise.</returns>
         /// <remarks>The key is removed from the inventory only if it opens the door.</remarks>
         /// <exception cref="InvalidOperationException">The door is already opened (check with <see cref="IsOpened"/>).</exception>"
-        public bool Open(Inventory keySource) =>
-            OpenAsync(keySource).GetAwaiter().GetResult();
-
         public async Task<bool> OpenAsync(Inventory keySource)
         {
             if (IsOpened)
