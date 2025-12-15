@@ -28,11 +28,11 @@ public class ExplorerTest
         private int _directionChangedCount = 0, _positionChangedCount = 0;
     }
 
-    private RandExplorer NewExplorerFor(
-        string labyrinth,
-        out ExplorerEventsCatcher events,
-        params Actions[] actions
-    )
+    private static RandExplorer NewExplorerFor(
+            string labyrinth,
+            out ExplorerEventsCatcher events,
+            params Actions[] actions
+        )
     {
         var laby = new Labyrinth.Labyrinth(labyrinth);
         var mockRnd = new Mock<IEnumRandomizer<Actions>>();
@@ -53,6 +53,7 @@ public class ExplorerTest
     [Test]
     public Task GetOutNegativeThrowsException()
     {
+        int nbTries = -3;
         var test = NewExplorerFor("""
             + +
             |x|
@@ -61,16 +62,17 @@ public class ExplorerTest
             out var events
         );
         Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => test.GetOutAsync(-3)
+            () => test.GetOutAsync(nbTries)
         );
-        Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(events.DirectionChangedCount, Is.Zero);
+        Assert.That(events.PositionChangedCount, Is.Zero);
         return Task.CompletedTask;
     }
 
     [Test]
     public Task GetOutZeroThrowsException()
     {
+        int nbTries = 0;
         var test = NewExplorerFor("""
             + +
             |x|
@@ -79,16 +81,17 @@ public class ExplorerTest
             out var events
         );
         Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => test.GetOutAsync(0)
+            () => test.GetOutAsync(nbTries)
         );
-        Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(events.DirectionChangedCount, Is.EqualTo(nbTries));
+        Assert.That(events.PositionChangedCount, Is.Zero);
         return Task.CompletedTask;
     }
 
     [Test]
     public async Task GetOutInHole()
     {
+        int nbTries = 10;
         var test = NewExplorerFor("""
             +-+
             |x/
@@ -98,16 +101,17 @@ public class ExplorerTest
             """,
             out var events
         );
-        var left = await test.GetOutAsync(10);
+        var left = await test.GetOutAsync(nbTries);
 
-        Assert.That(left, Is.EqualTo(0));
-        Assert.That(events.DirectionChangedCount, Is.EqualTo(10));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(left, Is.Zero);
+        Assert.That(events.DirectionChangedCount, Is.EqualTo(nbTries));
+        Assert.That(events.PositionChangedCount, Is.Zero);
     }
 
     [Test]
     public async Task GetOutFacingOutsideAtStart()
     {
+        int nbTries = 10;
         var test = NewExplorerFor("""
             | x |
             |   |
@@ -115,16 +119,17 @@ public class ExplorerTest
             """,
             out var events
         );
-        var left = await test.GetOutAsync(10);
+        var left = await test.GetOutAsync(nbTries);
 
-        Assert.That(left, Is.EqualTo(10));
-        Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(left, Is.EqualTo(nbTries));
+        Assert.That(events.DirectionChangedCount, Is.Zero);
+        Assert.That(events.PositionChangedCount, Is.Zero);
     }
 
     [Test]
     public async Task GetOutRotatingOnce()
     {
+        int nbTries = 10;
         var test = NewExplorerFor("""
             --+
               |
@@ -135,17 +140,18 @@ public class ExplorerTest
             Actions.TurnLeft
         );
 
-        var left = await test.GetOutAsync(10);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.EqualTo(9));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount, Is.Zero);
         Assert.That(events.LastArgs, Is.EqualTo((0, 2, Direction.West)));
     }
 
     [Test]
     public async Task GetOutRotatingTwice()
     {
+        int nbTries = 10;
         var test = NewExplorerFor("""
             +---+
             |   |
@@ -156,7 +162,7 @@ public class ExplorerTest
             Actions.TurnLeft
         );
 
-        var left = await test.GetOutAsync(10);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.EqualTo(8));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(2));
@@ -166,6 +172,7 @@ public class ExplorerTest
     [Test]
     public async Task GetOutWalkingOnce()
     {
+        int nbTries = 10;
         var test = NewExplorerFor("""
             --+
              x|
@@ -176,7 +183,7 @@ public class ExplorerTest
             Actions.Walk
         );
 
-        var left = await test.GetOutAsync(10);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.EqualTo(8));
         Assert.That(events.PositionChangedCount, Is.EqualTo(1));
@@ -187,6 +194,7 @@ public class ExplorerTest
     [Test]
     public async Task GetOutWalkingExactMoves()
     {
+        int nbTries = 3;
         var test = NewExplorerFor("""
             ---+
               x|
@@ -198,7 +206,7 @@ public class ExplorerTest
             Actions.Walk
         );
 
-        var left = await test.GetOutAsync(3);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.Zero);
         Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
@@ -209,6 +217,7 @@ public class ExplorerTest
     [Test]
     public async Task GetOutWithMultipleMoves()
     {
+        int nbTries = 15;
         var test = NewExplorerFor("""
             +---+
                k|
@@ -229,7 +238,7 @@ public class ExplorerTest
             Actions.Walk
         );
 
-        var left = await test.GetOutAsync(15);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.EqualTo(6));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(6));
@@ -240,6 +249,7 @@ public class ExplorerTest
     [Test]
     public async Task GetOutPassingADoor()
     {
+        int nbTries = 10;
         var test = NewExplorerFor("""
             +-/-+
             | k |
@@ -250,7 +260,7 @@ public class ExplorerTest
             Actions.Walk,
             Actions.Walk
         );
-        var left = await test.GetOutAsync(10);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.EqualTo(8));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
@@ -261,6 +271,7 @@ public class ExplorerTest
     [Test]
     public async Task GetOutPassingTwoDoors()
     {
+        int nbTries = 10;
         var test = NewExplorerFor("""
             +--+
             |kx|
@@ -278,7 +289,7 @@ public class ExplorerTest
             Actions.Walk, // key
             Actions.Walk  // door
         );
-        var left = await test.GetOutAsync(10);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.Zero);
         Assert.That(events.DirectionChangedCount, Is.EqualTo(6));
@@ -289,6 +300,7 @@ public class ExplorerTest
     [Test]
     public async Task GetOutPassingTwoKeysBeforeDoors()
     {
+        int nbTries = 10;
         var test = NewExplorerFor("""
             +--+
             |kx/
@@ -301,7 +313,7 @@ public class ExplorerTest
             Actions.Walk,// swap keys
             Actions.Walk // door
         );
-        var left = await test.GetOutAsync(10);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.Zero);
         Assert.That(events.DirectionChangedCount, Is.EqualTo(7));
@@ -312,6 +324,7 @@ public class ExplorerTest
     [Test]
     public async Task GetOutPassingMultipleKeysBeforeDoors()
     {
+        int nbTries = 20;
         var test = NewExplorerFor("""
             +---+
             |kx /
@@ -335,7 +348,7 @@ public class ExplorerTest
             Actions.TurnLeft,
             Actions.Walk // door
         );
-        var left = await test.GetOutAsync(20);
+        var left = await test.GetOutAsync(nbTries);
 
         Assert.That(left, Is.Zero);
         Assert.That(events.DirectionChangedCount, Is.EqualTo(13));
