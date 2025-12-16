@@ -26,12 +26,13 @@ namespace Labyrinth.Crawl
         /// <summary>
         /// Gets the tile in front of the crawler.
         /// </summary>
-        Tile FacingTile { get; }
+        Task<Tile> GetFacingTileAsync();
 
         /// <summary>
         /// Pass the tile in front of the crawler and move into it.
         /// </summary>
-        /// <returns>An inventory of the collectable items in the place reached.</returns>
-        Inventory Walk();
+        /// <param name="crawlerInventory">Inventory available to the crawler to interact with tiles.</param>
+        /// <returns>Result of the move including collected inventory on success.</returns>
+        Task<WalkResult> TryWalkAsync(Inventory crawlerInventory);
     }
 }
