@@ -1,4 +1,6 @@
-﻿using Labyrinth.Sys;
+﻿using Labyrinth.Crawl;
+using Labyrinth.Sys;
+using Labyrinth.Tiles;
 
 namespace Labyrinth.Navigation
 {
@@ -6,7 +8,7 @@ namespace Labyrinth.Navigation
     {
         private readonly IEnumRandomizer<MoveAction> _randomizer = randomizer ?? throw new ArgumentNullException(nameof(randomizer));
 
-        public Task<MoveAction> NextActionAsync(Crawl.ICrawler crawler, Items.Inventory bag) =>
-            Task.FromResult(_randomizer.Next());
+        public async Task<MoveAction> NextActionAsync(ICrawler crawler, Items.Inventory bag) =>
+            await crawler.GetFacingTileAsync() is Wall ? MoveAction.TurnLeft : _randomizer.Next();
     }
 }

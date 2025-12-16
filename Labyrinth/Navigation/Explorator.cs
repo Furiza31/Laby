@@ -26,21 +26,14 @@ namespace Labyrinth.Navigation
             {
                 EventHandler<CrawlingEventArgs>? changeEvent;
 
-                if (facingTile is Wall)
+                var action = await _strategy.NextActionAsync(_crawler, bag);
+                changeEvent = action switch
                 {
-                    changeEvent = TurnAndNotify(_crawler.Direction.TurnLeft);
-                }
-                else
-                {
-                    var action = await _strategy.NextActionAsync(_crawler, bag);
-                    changeEvent = action switch
-                    {
-                        MoveAction.TurnRight => TurnAndNotify(_crawler.Direction.TurnRight),
-                        MoveAction.Walk => await TryWalkAsync(bag),
-                        MoveAction.TurnLeft => TurnAndNotify(_crawler.Direction.TurnLeft),
-                        _ => throw new InvalidOperationException("Unknown MoveAction")
-                    };
-                }
+                    MoveAction.TurnRight => TurnAndNotify(_crawler.Direction.TurnRight),
+                    MoveAction.Walk => await TryWalkAsync(bag),
+                    MoveAction.TurnLeft => TurnAndNotify(_crawler.Direction.TurnLeft),
+                    _ => throw new InvalidOperationException("Unknown MoveAction")
+                };
                 if (facingTile is Door door && door.IsLocked)
                 {
                     TryOpenDoor(door, bag);
