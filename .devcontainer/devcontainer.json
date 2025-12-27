@@ -1,0 +1,23 @@
+{
+    "name": "C#",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:dev-9.0",
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csdevkit",
+                "ms-dotnettools.csharp",
+                "VisualStudioExptTeam.vscodeintellicode",
+                "ms-dotnettools.vscode-dotnet-runtime",
+                "ms-vscode.cpptools-extension-pack",
+                "github.copilot",
+                "github.copilot-chat",
+                "openai.chatgpt"
+            ]
+        }
+    },
+    "postCreateCommand": "dotnet restore",
+    "remoteUser": "vscode"
+}
