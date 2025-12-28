@@ -1,8 +1,5 @@
-﻿using Labyrinth;
-using Labyrinth.Crawl;
-using Labyrinth.Sys;
-using Moq;
-using static Labyrinth.RandExplorer;
+﻿using Labyrinth.Crawl;
+using Labyrinth.Navigation;
 
 namespace LabyrinthTest;
 
@@ -10,9 +7,9 @@ public class ExplorerTest
 {
     private class ExplorerEventsCatcher
     {
-        public ExplorerEventsCatcher(RandExplorer explorer)
+        public ExplorerEventsCatcher(IExplorator explorer)
         {
-            explorer.PositionChanged  += (s, e) => CatchEvent(ref _positionChangedCount , e);
+            explorer.PositionChanged += (s, e) => CatchEvent(ref _positionChangedCount, e);
             explorer.DirectionChanged += (s, e) => CatchEvent(ref _directionChangedCount, e);
         }
         public int PositionChangedCount => _positionChangedCount;
@@ -28,25 +25,34 @@ public class ExplorerTest
         private int _directionChangedCount = 0, _positionChangedCount = 0;
     }
 
-    private RandExplorer NewExplorerFor(
-        string labyrinth, 
-        out ExplorerEventsCatcher events,
-        params Actions[] actions
-    ) {
-        var laby = new Labyrinth.Labyrinth(labyrinth);
-        var mockRnd = new Mock<IEnumRandomizer<Actions>>();
+    private class QueueStrategy : IMovementStrategy
+    {
+        private readonly Queue<MoveAction> _actions;
 
-        mockRnd.Setup(r => r.Next()).Returns(
-            new Queue<Actions>(actions).Dequeue
-        );
-        var explorer = new RandExplorer(
+        public QueueStrategy(IEnumerable<MoveAction> actions) =>
+            _actions = new Queue<MoveAction>(actions);
+
+        public MoveAction NextMove(ICrawler crawler) =>
+            _actions.Count == 0 ? MoveAction.TurnLeft : _actions.Dequeue();
+    }
+
+    private IExplorator NewExplorerFor(
+        string labyrinth,
+        out ExplorerEventsCatcher events,
+        params MoveAction[] actions
+    )
+    {
+        var laby = new Labyrinth.Labyrinth(labyrinth);
+        var strategy = new QueueStrategy(actions);
+
+        var explorer = new Explorator(
             laby.NewCrawler(),
-            mockRnd.Object
+            strategy
         );
         events = new ExplorerEventsCatcher(explorer);
         return explorer;
     }
-    
+
     [Test]
     public void GetOutNegativeThrowsException()
     {
@@ -58,11 +64,11 @@ public class ExplorerTest
             out var events
         );
         Assert.That(
-            () => test.GetOut(-3), 
+            () => test.GetOut(-3),
             Throws.TypeOf<ArgumentOutOfRangeException>()
         );
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
     }
 
     [Test]
@@ -76,11 +82,11 @@ public class ExplorerTest
             out var events
         );
         Assert.That(
-            () => test.GetOut(0), 
+            () => test.GetOut(0),
             Throws.TypeOf<ArgumentOutOfRangeException>()
         );
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
     }
 
     [Test]
@@ -99,7 +105,7 @@ public class ExplorerTest
 
         Assert.That(left, Is.EqualTo(0));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(10));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
     }
 
     [Test]
@@ -116,7 +122,7 @@ public class ExplorerTest
 
         Assert.That(left, Is.EqualTo(10));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
     }
 
     [Test]
@@ -127,16 +133,16 @@ public class ExplorerTest
               |
             x |
             --+
-            """, 
+            """,
             out var events,
-            Actions.TurnLeft
+            MoveAction.TurnLeft
         );
 
         var left = test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(9));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
         Assert.That(events.LastArgs, Is.EqualTo((0, 2, Direction.West)));
     }
 
@@ -149,8 +155,8 @@ public class ExplorerTest
             | x |
             """,
             out var events,
-            Actions.TurnLeft,
-            Actions.TurnLeft
+            MoveAction.TurnLeft,
+            MoveAction.TurnLeft
         );
 
         var left = test.GetOut(10);
@@ -170,13 +176,13 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk
+            MoveAction.Walk
         );
 
         var left = test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(8));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(1));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(1));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
         Assert.That(events.LastArgs, Is.EqualTo((0, 1, Direction.West)));
     }
@@ -191,15 +197,15 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk,
-            Actions.Walk
+            MoveAction.Walk,
+            MoveAction.Walk
         );
 
         var left = test.GetOut(3);
 
         Assert.That(left, Is.EqualTo(0));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(2));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(2));
         Assert.That(events.LastArgs, Is.EqualTo((0, 1, Direction.West)));
     }
 
@@ -215,22 +221,22 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk,
-            Actions.Walk,
+            MoveAction.Walk,
+            MoveAction.Walk,
             // auto turn left
-            Actions.TurnLeft,
-            Actions.TurnLeft,
-            Actions.Walk,
-            Actions.Walk,
+            MoveAction.TurnLeft,
+            MoveAction.TurnLeft,
+            MoveAction.Walk,
+            MoveAction.Walk,
             // auto turn left
-            Actions.Walk
+            MoveAction.Walk
         );
 
         var left = test.GetOut(15);
 
         Assert.That(left, Is.EqualTo(5));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(5));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(5));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(5));
         Assert.That(events.LastArgs, Is.EqualTo((0, 1, Direction.West)));
     }
 
@@ -244,14 +250,14 @@ public class ExplorerTest
             +---+
             """,
             out var events,
-            Actions.Walk,
-            Actions.Walk
+            MoveAction.Walk,
+            MoveAction.Walk
         );
         var left = test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(8));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(2));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(2));
         Assert.That(events.LastArgs, Is.EqualTo((2, 0, Direction.North)));
     }
 
@@ -267,19 +273,19 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk, // key
+            MoveAction.Walk, // key
+                             // auto turn left
+            MoveAction.Walk, // door
+            MoveAction.Walk,
             // auto turn left
-            Actions.Walk, // door
-            Actions.Walk,
-            // auto turn left
-            Actions.Walk, // key
-            Actions.Walk  // door
+            MoveAction.Walk, // key
+            MoveAction.Walk  // door
         );
         var left = test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(2));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(3));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(5));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(5));
         Assert.That(events.LastArgs, Is.EqualTo((3, 3, Direction.East)));
     }
 
@@ -293,16 +299,16 @@ public class ExplorerTest
             +--+
             """,
             out var events,
-            Actions.Walk,// key
-            Actions.Walk,
-            Actions.Walk,// swap keys
-            Actions.Walk // door
+            MoveAction.Walk,// key
+            MoveAction.Walk,
+            MoveAction.Walk,// swap keys
+            MoveAction.Walk // door
         );
         var left = test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(3));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(3));
-        Assert.That(events.PositionChangedCount , Is.EqualTo(4));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(4));
         Assert.That(events.LastArgs, Is.EqualTo((3, 2, Direction.East)));
     }
 
@@ -317,20 +323,20 @@ public class ExplorerTest
             +---+
             """,
             out var events,
-            Actions.Walk,// key
+            MoveAction.Walk,// key
+                            // auto turn left
+            MoveAction.Walk,// key 
+            MoveAction.Walk,// key
+                            // auto turn left
+            MoveAction.Walk,// door
+            MoveAction.Walk,
             // auto turn left
-            Actions.Walk,// key 
-            Actions.Walk,// key
-            // auto turn left
-            Actions.Walk,// door
-            Actions.Walk,
-            // auto turn left
-            Actions.Walk,
-            Actions.Walk,// door
-            // auto turn left
-            Actions.TurnLeft,
-            Actions.TurnLeft,
-            Actions.Walk // door
+            MoveAction.Walk,
+            MoveAction.Walk,// door
+                            // auto turn left
+            MoveAction.TurnLeft,
+            MoveAction.TurnLeft,
+            MoveAction.Walk // door
         );
         var left = test.GetOut(20);
 
