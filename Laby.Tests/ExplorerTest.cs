@@ -264,6 +264,29 @@ public class ExplorerTest
     }
 
     [Test]
+    [CancelAfter(1000)]
+    public void GetOutDoesNotLoopOnWrongKey()
+    {
+        var test = NewExplorerFor("""
+            +---+
+            |/ k|
+            |k  |
+            |x /|
+            +---+
+            """,
+            out var events,
+            MoveAction.Walk,
+            MoveAction.Walk
+        );
+        var left = test.GetOut(2);
+
+        Assert.That(left, Is.EqualTo(0));
+        Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
+        Assert.That(events.PositionChangedCount, Is.EqualTo(1));
+        Assert.That(events.LastArgs, Is.EqualTo((1, 2, Direction.West)));
+    }
+
+    [Test]
     public void GetOutPassingTwoDoors()
     {
         var test = NewExplorerFor("""
