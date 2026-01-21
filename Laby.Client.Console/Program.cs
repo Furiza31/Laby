@@ -12,7 +12,7 @@ void DrawExplorer(object? sender, CrawlingEventArgs e)
     Console.SetCursorPosition(e.X, e.Y);
     Console.Write(DirToChar(e.Direction));
     Console.SetCursorPosition(0, 0);
-    Thread.Sleep(50);
+    Thread.Sleep(10);
 }
 
 var labyrinth = new Labyrinth("""

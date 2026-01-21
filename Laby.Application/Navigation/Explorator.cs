@@ -64,10 +64,11 @@ namespace Laby.Application.Navigation
 
         private void TryOpenLockedDoor(MyInventory bag)
         {
-            if (_crawler.FacingTile is Door door && door.IsLocked)
+            if (_crawler.FacingTile is not Door { IsLocked: true } door) return;
+            var attempts = bag.Items.Count();
+            for (var i = 0; i < attempts && door.IsLocked; i++)
             {
-                while (bag.HasItems && !door.Open(bag))
-                    ;
+                _ = door.Open(bag);
             }
         }
 
