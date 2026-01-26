@@ -21,7 +21,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore
         run: dotnet restore Labyrinth.sln
@@ -46,7 +46,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore
         run: dotnet restore Labyrinth.sln
@@ -55,7 +55,7 @@ jobs:
         run: dotnet build Labyrinth.sln -c Release --no-restore
 
       - name: Publish
-        run: dotnet publish ./Labyrinth/Labyrinth.csproj -c Release -o ./out --no-build
+        run: dotnet publish ./Laby.Client.Console/Laby.Client.Console.csproj -c Release -o ./out --no-build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
