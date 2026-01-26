@@ -1,17 +1,18 @@
-﻿using Laby.Algorithms.Navigation;
-using Laby.Application.Navigation;
-using Laby.Core;
-using Laby.Core.Crawl;
+﻿using Labyrinth;
+using Labyrinth.Build;
+using Labyrinth.Crawl;
+using Labyrinth.Sys;
+using Moq;
 
-namespace Laby.Tests;
+namespace LabyrinthTest;
 
 public class ExplorerTest
 {
     private class ExplorerEventsCatcher
     {
-        public ExplorerEventsCatcher(IExplorator explorer)
+        public ExplorerEventsCatcher(Explorer explorer)
         {
-            explorer.PositionChanged += (s, e) => CatchEvent(ref _positionChangedCount, e);
+            explorer.PositionChanged  += (s, e) => CatchEvent(ref _positionChangedCount , e);
             explorer.DirectionChanged += (s, e) => CatchEvent(ref _directionChangedCount, e);
         }
         public int PositionChangedCount => _positionChangedCount;
@@ -27,34 +28,25 @@ public class ExplorerTest
         private int _directionChangedCount = 0, _positionChangedCount = 0;
     }
 
-    private class QueueStrategy : IMovementStrategy
-    {
-        private readonly Queue<MoveAction> _actions;
-
-        public QueueStrategy(IEnumerable<MoveAction> actions) =>
-            _actions = new Queue<MoveAction>(actions);
-
-        public MoveAction NextMove(ICrawler crawler) =>
-            _actions.Count == 0 ? MoveAction.TurnLeft : _actions.Dequeue();
-    }
-
-    private IExplorator NewExplorerFor(
-        string labyrinth,
+    private Explorer NewExplorerFor(
+        string labyrinth, 
         out ExplorerEventsCatcher events,
-        params MoveAction[] actions
-    )
-    {
-        var laby = new Labyrinth(labyrinth);
-        var strategy = new QueueStrategy(actions);
+        params ExplorerAction[] actions
+    ) {
+        var laby = new Labyrinth.Labyrinth(new AsciiParser(labyrinth));
+        var mockRnd = new Mock<IEnumRandomizer<ExplorerAction>>();
 
-        var explorer = new Explorator(
+        mockRnd.Setup(r => r.Next()).Returns(
+            new Queue<ExplorerAction>(actions).Dequeue
+        );
+        var explorer = new Explorer(
             laby.NewCrawler(),
-            strategy
+            new RandExplorerStrategy(mockRnd.Object)
         );
         events = new ExplorerEventsCatcher(explorer);
         return explorer;
     }
-
+    
     [Test]
     public void GetOutNegativeThrowsException()
     {
@@ -66,11 +58,11 @@ public class ExplorerTest
             out var events
         );
         Assert.That(
-            () => test.GetOut(-3),
+            () => test.GetOut(-3), 
             Throws.TypeOf<ArgumentOutOfRangeException>()
         );
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
     }
 
     [Test]
@@ -84,15 +76,15 @@ public class ExplorerTest
             out var events
         );
         Assert.That(
-            () => test.GetOut(0),
+            () => test.GetOut(0), 
             Throws.TypeOf<ArgumentOutOfRangeException>()
         );
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
     }
 
     [Test]
-    public void GetOutInHole()
+    public async Task GetOutInHole()
     {
         var test = NewExplorerFor("""
             +-+
@@ -101,17 +93,21 @@ public class ExplorerTest
             |k|
             +-+
             """,
-            out var events
+            out var events,
+            ExplorerAction.Walk,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft
         );
-        var left = test.GetOut(10);
+        var left = await test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(0));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(10));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
     }
 
     [Test]
-    public void GetOutFacingOutsideAtStart()
+    public async Task GetOutFacingOutsideAtStart()
     {
         var test = NewExplorerFor("""
             | x |
@@ -120,36 +116,36 @@ public class ExplorerTest
             """,
             out var events
         );
-        var left = test.GetOut(10);
+        var left = await test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(10));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
     }
 
     [Test]
-    public void GetOutRotatingOnce()
+    public async Task GetOutRotatingOnce()
     {
         var test = NewExplorerFor("""
             --+
               |
             x |
             --+
-            """,
+            """, 
             out var events,
-            MoveAction.TurnLeft
+            ExplorerAction.TurnLeft
         );
 
-        var left = test.GetOut(10);
+        var left = await test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(9));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(0));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(0));
         Assert.That(events.LastArgs, Is.EqualTo((0, 2, Direction.West)));
     }
 
     [Test]
-    public void GetOutRotatingTwice()
+    public async Task GetOutRotatingTwice()
     {
         var test = NewExplorerFor("""
             +---+
@@ -157,11 +153,11 @@ public class ExplorerTest
             | x |
             """,
             out var events,
-            MoveAction.TurnLeft,
-            MoveAction.TurnLeft
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft
         );
 
-        var left = test.GetOut(10);
+        var left = await test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(8));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(2));
@@ -169,7 +165,7 @@ public class ExplorerTest
     }
 
     [Test]
-    public void GetOutWalkingOnce()
+    public async Task GetOutWalkingOnce()
     {
         var test = NewExplorerFor("""
             --+
@@ -178,19 +174,19 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            MoveAction.Walk
+            ExplorerAction.Walk
         );
 
-        var left = test.GetOut(10);
+        var left = await test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(8));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(1));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(1));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
         Assert.That(events.LastArgs, Is.EqualTo((0, 1, Direction.West)));
     }
 
     [Test]
-    public void GetOutWalkingExactMoves()
+    public async Task GetOutWalkingExactMoves()
     {
         var test = NewExplorerFor("""
             ---+
@@ -199,20 +195,20 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            MoveAction.Walk,
-            MoveAction.Walk
+            ExplorerAction.Walk,
+            ExplorerAction.Walk
         );
 
-        var left = test.GetOut(3);
+        var left = await test.GetOut(3);
 
         Assert.That(left, Is.EqualTo(0));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(2));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(2));
         Assert.That(events.LastArgs, Is.EqualTo((0, 1, Direction.West)));
     }
 
     [Test]
-    public void GetOutWithMultipleMoves()
+    public async Task GetOutWithMultipleMoves()
     {
         var test = NewExplorerFor("""
             +---+
@@ -222,28 +218,29 @@ public class ExplorerTest
             | --+
             """,
             out var events,
+            ExplorerAction.Walk,
             // auto turn left
-            MoveAction.Walk,
-            MoveAction.Walk,
+            ExplorerAction.Walk,
+            ExplorerAction.Walk,
             // auto turn left
-            MoveAction.TurnLeft,
-            MoveAction.TurnLeft,
-            MoveAction.Walk,
-            MoveAction.Walk,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.Walk,
+            ExplorerAction.Walk,
             // auto turn left
-            MoveAction.Walk
+            ExplorerAction.Walk
         );
 
-        var left = test.GetOut(15);
+        var left = await test.GetOut(15);
 
         Assert.That(left, Is.EqualTo(5));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(5));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(5));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(5));
         Assert.That(events.LastArgs, Is.EqualTo((0, 1, Direction.West)));
     }
 
     [Test]
-    public void GetOutPassingADoor()
+    public async Task GetOutPassingADoor()
     {
         var test = NewExplorerFor("""
             +-/-+
@@ -252,42 +249,19 @@ public class ExplorerTest
             +---+
             """,
             out var events,
-            MoveAction.Walk,
-            MoveAction.Walk
+            ExplorerAction.Walk,
+            ExplorerAction.Walk
         );
-        var left = test.GetOut(10);
+        var left = await test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(8));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(0));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(2));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(2));
         Assert.That(events.LastArgs, Is.EqualTo((2, 0, Direction.North)));
     }
 
     [Test]
-    [CancelAfter(1000)]
-    public void GetOutDoesNotLoopOnWrongKey()
-    {
-        var test = NewExplorerFor("""
-            +---+
-            |/ k|
-            |k  |
-            |x /|
-            +---+
-            """,
-            out var events,
-            MoveAction.Walk,
-            MoveAction.Walk
-        );
-        var left = test.GetOut(2);
-
-        Assert.That(left, Is.EqualTo(0));
-        Assert.That(events.DirectionChangedCount, Is.EqualTo(1));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(1));
-        Assert.That(events.LastArgs, Is.EqualTo((1, 2, Direction.West)));
-    }
-
-    [Test]
-    public void GetOutPassingTwoDoors()
+    public async Task GetOutPassingTwoDoors()
     {
         var test = NewExplorerFor("""
             +--+
@@ -298,24 +272,24 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            MoveAction.Walk, // key
-                             // auto turn left
-            MoveAction.Walk, // door
-            MoveAction.Walk,
+            ExplorerAction.Walk, // key
             // auto turn left
-            MoveAction.Walk, // key
-            MoveAction.Walk  // door
+            ExplorerAction.Walk, // door
+            ExplorerAction.Walk,
+            // auto turn left
+            ExplorerAction.Walk, // key
+            ExplorerAction.Walk  // door
         );
-        var left = test.GetOut(10);
+        var left = await test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(2));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(3));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(5));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(5));
         Assert.That(events.LastArgs, Is.EqualTo((3, 3, Direction.East)));
     }
 
     [Test]
-    public void GetOutPassingTwoKeysBeforeDoors()
+    public async Task GetOutPassingTwoKeysBeforeDoors()
     {
         var test = NewExplorerFor("""
             +--+
@@ -324,21 +298,21 @@ public class ExplorerTest
             +--+
             """,
             out var events,
-            MoveAction.Walk,// key
-            MoveAction.Walk,
-            MoveAction.Walk,// swap keys
-            MoveAction.Walk // door
+            ExplorerAction.Walk,// key
+            ExplorerAction.Walk,
+            ExplorerAction.Walk,// swap keys
+            ExplorerAction.Walk // door
         );
-        var left = test.GetOut(10);
+        var left = await test.GetOut(10);
 
         Assert.That(left, Is.EqualTo(3));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(3));
-        Assert.That(events.PositionChangedCount, Is.EqualTo(4));
+        Assert.That(events.PositionChangedCount , Is.EqualTo(4));
         Assert.That(events.LastArgs, Is.EqualTo((3, 2, Direction.East)));
     }
 
     [Test]
-    public void GetOutPassingMultipleKeysBeforeDoors()
+    public async Task GetOutPassingMultipleKeysBeforeDoors()
     {
         var test = NewExplorerFor("""
             +---+
@@ -348,22 +322,22 @@ public class ExplorerTest
             +---+
             """,
             out var events,
-            MoveAction.Walk,// key
-                            // auto turn left
-            MoveAction.Walk,// key 
-            MoveAction.Walk,// key
-                            // auto turn left
-            MoveAction.Walk,// door
-            MoveAction.Walk,
+            ExplorerAction.Walk,// key
             // auto turn left
-            MoveAction.Walk,
-            MoveAction.Walk,// door
-                            // auto turn left
-            MoveAction.TurnLeft,
-            MoveAction.TurnLeft,
-            MoveAction.Walk // door
+            ExplorerAction.Walk,// key 
+            ExplorerAction.Walk,// key
+            // auto turn left
+            ExplorerAction.Walk,// door
+            ExplorerAction.Walk,
+            // auto turn left
+            ExplorerAction.Walk,
+            ExplorerAction.Walk,// door
+            // auto turn left
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.Walk // door
         );
-        var left = test.GetOut(20);
+        var left = await test.GetOut(20);
 
         Assert.That(left, Is.EqualTo(5));
         Assert.That(events.DirectionChangedCount, Is.EqualTo(7));

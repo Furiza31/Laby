@@ -1,10 +1,11 @@
-﻿using Laby.Core.Tiles;
+﻿using Labyrinth.Items;
+using Labyrinth.Tiles;
 
-namespace Laby.Core.Build
+namespace Labyrinth.Build
 {
-    public class AsciiParser
+    public class AsciiParser(string ascii_map) : IBuilder
     {
-        public Tile[,] Parse(string ascii_map)
+        public Tile[,] Build()
         {
             var lines = ascii_map.Split("\n,\r\n".Split(','), StringSplitOptions.None);
             var width = lines[0].Length;
@@ -33,7 +34,7 @@ namespace Laby.Core.Build
             }
             return tiles;
         }
-        public EventHandler<StartEventArgs>? StartPositionFound;
+        public event EventHandler<StartEventArgs>? StartPositionFound;
 
         private Room NewStartPos(int x, int y)
         {

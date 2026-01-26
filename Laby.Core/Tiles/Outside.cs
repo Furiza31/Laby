@@ -1,4 +1,4 @@
-﻿namespace Laby.Core.Tiles
+﻿namespace Labyrinth.Tiles
 {
     /// <summary>
     /// Outside tile used for labyrinth bounds detection only, not for walkthrough.

@@ -1,50 +1,103 @@
-﻿using Laby.Algorithms.Navigation;
-using Laby.Algorithms.Sys;
-using Laby.Application.Navigation;
-using Laby.Core;
-using Laby.Core.Crawl;
+﻿using Labyrinth.Application;
+using Labyrinth.ApiClient;
+using Labyrinth.Build;
+using Labyrinth.Crawl;
+using Labyrinth.Items;
+using Labyrinth.Tiles;
+using Dto=ApiTypes;
+using System.Text.Json;
+
+const int OffsetY = 2;
 
 char DirToChar(Direction dir) =>
     "^<v>"[dir.DeltaX * dir.DeltaX + dir.DeltaX + dir.DeltaY + 1];
 
+var TileToChar = new Dictionary<Type, char>
+{
+    [typeof(Room   )] = ' ',
+    [typeof(Wall   )] = '#',
+    [typeof(Door   )] = '/'
+};
+
 void DrawExplorer(object? sender, CrawlingEventArgs e)
 {
-    Console.SetCursorPosition(e.X, e.Y);
+    var crawler = ((ExplorerCoordinator)sender!).Crawler;
+    var facingTileType = crawler.FacingTileType.Result;
+
+    if (facingTileType != typeof(Outside))
+    {
+        Console.SetCursorPosition(
+            e.X + e.Direction.DeltaX, 
+            e.Y + e.Direction.DeltaY + OffsetY
+        );
+        Console.Write(TileToChar[facingTileType]);
+    }
+    Console.SetCursorPosition(e.X, e.Y + OffsetY);
     Console.Write(DirToChar(e.Direction));
     Console.SetCursorPosition(0, 0);
-    Thread.Sleep(10);
+    if(crawler is ClientCrawler cc)
+    {
+        Console.WriteLine($"Bag : { cc.Bag.ItemTypes.Count() } item(s)");
+    }
+    Thread.Sleep(100);
 }
 
-var labyrinth = new Labyrinth("""
-    +--+--------+
-    |  /        |
-    |  +--+--+  |
-    |     |k    |
-    +--+  |  +--+
-       |k  x    |
-    +  +-------/|
-    |           |
-    +-----------+
-    """);
-var crawler = labyrinth.NewCrawler();
+Labyrinth.Labyrinth labyrinth;
+ICrawler crawler;
+Inventory? bag = null;
+ContestSession? contest = null;
+
+if (args.Length < 2)
+{
+    Console.WriteLine(
+        "Commande line usage : https://apiserver.example appKeyGuid [settings.json]"
+    );
+    labyrinth = new Labyrinth.Labyrinth(new AsciiParser("""
+        +--+--------+
+        |  /        |
+        |  +--+--+  |
+        |     |k    |
+        +--+  |  +--+
+           |k  x    |
+        +  +-------/|
+        |           |
+        +-----------+
+        """));
+    crawler = labyrinth.NewCrawler();
+}
+else
+{
+    Dto.Settings? settings = null;
+
+    if (args.Length > 2)
+    {
+        settings = JsonSerializer.Deserialize<Dto.Settings>(File.ReadAllText(args[2]));
+    }
+    contest = await ContestSession.Open(new Uri(args[0]), Guid.Parse(args[1]), settings);
+    labyrinth = new (contest.Builder);
+    crawler = await contest.NewCrawler();
+    bag = contest.Bags.First();
+}
+
 var prevX = crawler.X;
 var prevY = crawler.Y;
-var moveRandomizer = new BasicEnumRandomizer<MoveAction>();
-var strategy = new RandomMovementStrategy(moveRandomizer);
-var explorer = new Explorator(
-    crawler,
-    strategy
-);
+var explorer = new ExplorerCoordinator(crawler);
 
 explorer.DirectionChanged += DrawExplorer;
-explorer.PositionChanged += (s, e) =>
+explorer.PositionChanged  += (s, e) =>
 {
     Console.SetCursorPosition(prevX, prevY);
     Console.Write(' ');
     DrawExplorer(s, e);
-    (prevX, prevY) = (e.X, e.Y);
+    (prevX, prevY) = (e.X, e.Y + OffsetY);
 };
 
 Console.Clear();
+Console.SetCursorPosition(0, OffsetY);
 Console.WriteLine(labyrinth);
-explorer.GetOut(1000);
+await explorer.GetOut(3000, bag);
+
+if (contest is not null)
+{
+    await contest.Close();
+}

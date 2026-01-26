@@ -1,7 +1,7 @@
-﻿using Laby.Core.Items;
-using Laby.Core.Tiles;
+﻿using Labyrinth.Items;
+using Labyrinth.Tiles;
 
-namespace Laby.Core.Crawl
+namespace Labyrinth.Crawl
 {
     /// <summary>
     /// Labyrinth crawler interface.
@@ -26,12 +26,13 @@ namespace Laby.Core.Crawl
         /// <summary>
         /// Gets the tile in front of the crawler.
         /// </summary>
-        Tile FacingTile { get; }
+        Task<Type> FacingTileType { get; }
 
         /// <summary>
         /// Pass the tile in front of the crawler and move into it.
         /// </summary>
-        /// <returns>An inventory of the collectable items in the place reached.</returns>
-        Inventory Walk();
+        /// <param name="myInventory">The inventory of the crawler</param>
+        /// <returns>The inventory of the place reached, null if cannot walk in.</returns>
+        Task<Inventory?> TryWalk(Inventory myInventory);
     }
 }

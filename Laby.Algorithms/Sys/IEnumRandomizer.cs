@@ -1,4 +1,4 @@
-﻿namespace Laby.Algorithms.Sys
+﻿namespace Labyrinth.Sys
 {
     /// <summary>
     /// Random generator for enum types.

@@ -1,7 +1,7 @@
-﻿using Laby.Core.Items;
-using Laby.Core.Tiles;
+﻿using Labyrinth.Items;
+using Labyrinth.Tiles;
 
-namespace Laby.Core.Build
+namespace Labyrinth.Build
 {
     /// <summary>
     /// Manage the creation of doors and key rooms ensuring each door has a corresponding key room.
@@ -52,7 +52,7 @@ namespace Laby.Core.Build
         {
             if (unplacedKeys.HasItems && emptyKeyRooms.Count > 0)
             {
-                emptyKeyRooms.Pop().Pass().MoveItemFrom(unplacedKeys);
+                emptyKeyRooms.Pop().Pass().MoveFirst(unplacedKeys);
             }
         }
 

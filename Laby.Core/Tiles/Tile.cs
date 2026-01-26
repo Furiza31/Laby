@@ -1,6 +1,6 @@
-﻿using Laby.Core.Items;
+﻿using Labyrinth.Items;
 
-namespace Laby.Core.Tiles
+namespace Labyrinth.Tiles
 {
     /// <summary>
     /// Base class for all tiles in the labyrinth.
@@ -17,7 +17,7 @@ namespace Laby.Core.Tiles
         /// </summary>
         /// <exception cref="InvalidOperationException">The tile is not traversable.</exception>
         /// <see cref="IsTraversable"/>
-        public Inventory Pass()
+        public LocalInventory Pass()
         {
             if (!IsTraversable)
             {

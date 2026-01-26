@@ -1,6 +1,6 @@
-﻿using Laby.Core.Items;
+﻿using Labyrinth.Items;
 
-namespace Laby.Core.Tiles
+namespace Labyrinth.Tiles
 {
     /// <summary>
     /// A room in the labyrinth.
