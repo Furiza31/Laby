@@ -36,7 +36,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Labyrinth\Labyrinth.csproj" />
+    <ProjectReference Include="..\Laby.Core\Laby.Core.csproj" />
+    <ProjectReference Include="..\Laby.Algorithms\Laby.Algorithms.csproj" />
   </ItemGroup>
 
 </Project>

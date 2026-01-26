@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Laby.Core\Laby.Core.csproj" />
+    <ProjectReference Include="..\Laby.Algorithms\Laby.Algorithms.csproj" />
+    <ProjectReference Include="..\Laby.Mapping\Laby.Mapping.csproj" />
+    <ProjectReference Include="..\Laby.Contracts\Laby.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

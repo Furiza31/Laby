@@ -1,10 +1,9 @@
-﻿using Labyrinth;
+﻿using Labyrinth.Application;
 using Labyrinth.ApiClient;
 using Labyrinth.Build;
 using Labyrinth.Crawl;
 using Labyrinth.Items;
 using Labyrinth.Tiles;
-using Labyrinth.Sys;
 using Dto=ApiTypes;
 using System.Text.Json;
 
@@ -22,7 +21,7 @@ var TileToChar = new Dictionary<Type, char>
 
 void DrawExplorer(object? sender, CrawlingEventArgs e)
 {
-    var crawler = ((RandExplorer)sender!).Crawler;
+    var crawler = ((ExplorerCoordinator)sender!).Crawler;
     var facingTileType = crawler.FacingTileType.Result;
 
     if (facingTileType != typeof(Outside))
@@ -82,10 +81,7 @@ else
 
 var prevX = crawler.X;
 var prevY = crawler.Y;
-var explorer = new RandExplorer(
-    crawler, 
-    new BasicEnumRandomizer<RandExplorer.Actions>()
-);
+var explorer = new ExplorerCoordinator(crawler);
 
 explorer.DirectionChanged += DrawExplorer;
 explorer.PositionChanged  += (s, e) =>
