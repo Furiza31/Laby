@@ -1,20 +1,13 @@
-﻿using Labyrinth.Crawl;
+using Labyrinth.Crawl;
 using Labyrinth.Items;
-using Labyrinth.Sys;
 using Labyrinth.Tiles;
 
 namespace Labyrinth
 {
-    public class RandExplorer(ICrawler crawler, IEnumRandomizer<RandExplorer.Actions> rnd)
+    public class Explorer(ICrawler crawler, IExplorerStrategy strategy)
     {
         private readonly ICrawler _crawler = crawler;
-        private readonly IEnumRandomizer<Actions> _rnd = rnd;
-        
-        public enum Actions
-        {
-            TurnLeft,
-            Walk
-        }
+        private readonly IExplorerStrategy _strategy = strategy;
 
         public ICrawler Crawler => _crawler;
 
@@ -23,16 +16,24 @@ namespace Labyrinth
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(n, 0, "n must be strictly positive");
 
             bag ??= new MyInventory();
-            for( ; n > 0 && await _crawler.FacingTileType != typeof(Outside); n--)
+            for (; n > 0; n--)
             {
+                var facingTileType = await _crawler.FacingTileType;
+
+                if (facingTileType == typeof(Outside))
+                {
+                    break;
+                }
+
+                var action = _strategy.NextAction(new ExplorerContext(_crawler, facingTileType, bag));
                 EventHandler<CrawlingEventArgs>? changeEvent;
 
-                if ((await _crawler.FacingTileType) != typeof(Wall)
-                    && _rnd.Next() == Actions.Walk
+                if (action == ExplorerAction.Walk
+                    && facingTileType != typeof(Wall)
                     && await _crawler.TryWalk(bag) is Inventory roomContent)
                 {
                     await bag.TryMoveItemsFrom(
-                        roomContent, 
+                        roomContent,
                         roomContent.ItemTypes.Select(_ => true).ToList()
                     );
                     changeEvent = PositionChanged;
@@ -42,8 +43,10 @@ namespace Labyrinth
                     _crawler.Direction.TurnLeft();
                     changeEvent = DirectionChanged;
                 }
+
                 changeEvent?.Invoke(this, new CrawlingEventArgs(_crawler));
             }
+
             return n;
         }
 
@@ -51,5 +54,4 @@ namespace Labyrinth
 
         public event EventHandler<CrawlingEventArgs>? DirectionChanged;
     }
-
 }

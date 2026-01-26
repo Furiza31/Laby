@@ -8,13 +8,18 @@ namespace Labyrinth.Application
     public class ExplorerCoordinator
     {
         public ExplorerCoordinator(ICrawler crawler)
-            : this(crawler, new BasicEnumRandomizer<RandExplorer.Actions>())
+            : this(crawler, new RandExplorerStrategy(new BasicEnumRandomizer<ExplorerAction>()))
         {
         }
 
-        public ExplorerCoordinator(ICrawler crawler, IEnumRandomizer<RandExplorer.Actions> randomizer)
+        public ExplorerCoordinator(ICrawler crawler, IEnumRandomizer<ExplorerAction> randomizer)
+            : this(crawler, new RandExplorerStrategy(randomizer))
         {
-            _explorer = new RandExplorer(crawler, randomizer);
+        }
+
+        public ExplorerCoordinator(ICrawler crawler, IExplorerStrategy strategy)
+        {
+            _explorer = new Explorer(crawler, strategy);
             _explorer.PositionChanged += (_, e) => PositionChanged?.Invoke(this, e);
             _explorer.DirectionChanged += (_, e) => DirectionChanged?.Invoke(this, e);
         }
@@ -27,6 +32,6 @@ namespace Labyrinth.Application
 
         public event EventHandler<CrawlingEventArgs>? DirectionChanged;
 
-        private readonly RandExplorer _explorer;
+        private readonly Explorer _explorer;
     }
 }

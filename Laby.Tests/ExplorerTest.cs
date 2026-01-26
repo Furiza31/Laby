@@ -3,7 +3,6 @@ using Labyrinth.Build;
 using Labyrinth.Crawl;
 using Labyrinth.Sys;
 using Moq;
-using static Labyrinth.RandExplorer;
 
 namespace LabyrinthTest;
 
@@ -11,7 +10,7 @@ public class ExplorerTest
 {
     private class ExplorerEventsCatcher
     {
-        public ExplorerEventsCatcher(RandExplorer explorer)
+        public ExplorerEventsCatcher(Explorer explorer)
         {
             explorer.PositionChanged  += (s, e) => CatchEvent(ref _positionChangedCount , e);
             explorer.DirectionChanged += (s, e) => CatchEvent(ref _directionChangedCount, e);
@@ -29,20 +28,20 @@ public class ExplorerTest
         private int _directionChangedCount = 0, _positionChangedCount = 0;
     }
 
-    private RandExplorer NewExplorerFor(
+    private Explorer NewExplorerFor(
         string labyrinth, 
         out ExplorerEventsCatcher events,
-        params Actions[] actions
+        params ExplorerAction[] actions
     ) {
         var laby = new Labyrinth.Labyrinth(new AsciiParser(labyrinth));
-        var mockRnd = new Mock<IEnumRandomizer<Actions>>();
+        var mockRnd = new Mock<IEnumRandomizer<ExplorerAction>>();
 
         mockRnd.Setup(r => r.Next()).Returns(
-            new Queue<Actions>(actions).Dequeue
+            new Queue<ExplorerAction>(actions).Dequeue
         );
-        var explorer = new RandExplorer(
+        var explorer = new Explorer(
             laby.NewCrawler(),
-            mockRnd.Object
+            new RandExplorerStrategy(mockRnd.Object)
         );
         events = new ExplorerEventsCatcher(explorer);
         return explorer;
@@ -95,10 +94,10 @@ public class ExplorerTest
             +-+
             """,
             out var events,
-            Actions.Walk,
-            Actions.TurnLeft,
-            Actions.TurnLeft,
-            Actions.TurnLeft
+            ExplorerAction.Walk,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft
         );
         var left = await test.GetOut(10);
 
@@ -134,7 +133,7 @@ public class ExplorerTest
             --+
             """, 
             out var events,
-            Actions.TurnLeft
+            ExplorerAction.TurnLeft
         );
 
         var left = await test.GetOut(10);
@@ -154,8 +153,8 @@ public class ExplorerTest
             | x |
             """,
             out var events,
-            Actions.TurnLeft,
-            Actions.TurnLeft
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft
         );
 
         var left = await test.GetOut(10);
@@ -175,7 +174,7 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk
+            ExplorerAction.Walk
         );
 
         var left = await test.GetOut(10);
@@ -196,8 +195,8 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk,
-            Actions.Walk
+            ExplorerAction.Walk,
+            ExplorerAction.Walk
         );
 
         var left = await test.GetOut(3);
@@ -219,17 +218,17 @@ public class ExplorerTest
             | --+
             """,
             out var events,
-            Actions.Walk,
+            ExplorerAction.Walk,
             // auto turn left
-            Actions.Walk,
-            Actions.Walk,
+            ExplorerAction.Walk,
+            ExplorerAction.Walk,
             // auto turn left
-            Actions.TurnLeft,
-            Actions.TurnLeft,
-            Actions.Walk,
-            Actions.Walk,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.Walk,
+            ExplorerAction.Walk,
             // auto turn left
-            Actions.Walk
+            ExplorerAction.Walk
         );
 
         var left = await test.GetOut(15);
@@ -250,8 +249,8 @@ public class ExplorerTest
             +---+
             """,
             out var events,
-            Actions.Walk,
-            Actions.Walk
+            ExplorerAction.Walk,
+            ExplorerAction.Walk
         );
         var left = await test.GetOut(10);
 
@@ -273,13 +272,13 @@ public class ExplorerTest
             """,
             out var events,
             // auto turn left
-            Actions.Walk, // key
+            ExplorerAction.Walk, // key
             // auto turn left
-            Actions.Walk, // door
-            Actions.Walk,
+            ExplorerAction.Walk, // door
+            ExplorerAction.Walk,
             // auto turn left
-            Actions.Walk, // key
-            Actions.Walk  // door
+            ExplorerAction.Walk, // key
+            ExplorerAction.Walk  // door
         );
         var left = await test.GetOut(10);
 
@@ -299,10 +298,10 @@ public class ExplorerTest
             +--+
             """,
             out var events,
-            Actions.Walk,// key
-            Actions.Walk,
-            Actions.Walk,// swap keys
-            Actions.Walk // door
+            ExplorerAction.Walk,// key
+            ExplorerAction.Walk,
+            ExplorerAction.Walk,// swap keys
+            ExplorerAction.Walk // door
         );
         var left = await test.GetOut(10);
 
@@ -323,20 +322,20 @@ public class ExplorerTest
             +---+
             """,
             out var events,
-            Actions.Walk,// key
+            ExplorerAction.Walk,// key
             // auto turn left
-            Actions.Walk,// key 
-            Actions.Walk,// key
+            ExplorerAction.Walk,// key 
+            ExplorerAction.Walk,// key
             // auto turn left
-            Actions.Walk,// door
-            Actions.Walk,
+            ExplorerAction.Walk,// door
+            ExplorerAction.Walk,
             // auto turn left
-            Actions.Walk,
-            Actions.Walk,// door
+            ExplorerAction.Walk,
+            ExplorerAction.Walk,// door
             // auto turn left
-            Actions.TurnLeft,
-            Actions.TurnLeft,
-            Actions.Walk // door
+            ExplorerAction.TurnLeft,
+            ExplorerAction.TurnLeft,
+            ExplorerAction.Walk // door
         );
         var left = await test.GetOut(20);
 
