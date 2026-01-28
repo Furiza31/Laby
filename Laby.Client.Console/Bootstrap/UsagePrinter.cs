@@ -1,6 +1,6 @@
 using SysConsole = System.Console;
 
-namespace Laby.Client.Console;
+namespace Laby.Client.Console.Bootstrap;
 
 internal static class UsagePrinter
 {

@@ -1,11 +1,12 @@
 using Laby.Core;
 using Laby.Core.Build;
 using Laby.Infrastructure.ApiClient;
+using Laby.Client.Console.Arguments;
 using Microsoft.Extensions.Configuration;
 using Dto = Laby.Contracts;
 using System.Text.Json;
 
-namespace Laby.Client.Console;
+namespace Laby.Client.Console.Sessions;
 
 internal static class SessionFactory
 {

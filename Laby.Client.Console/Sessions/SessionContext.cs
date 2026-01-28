@@ -4,7 +4,7 @@ using Laby.Core.Crawl;
 using Laby.Core.Items;
 using Laby.Infrastructure.ApiClient;
 
-namespace Laby.Client.Console;
+namespace Laby.Client.Console.Sessions;
 
 internal sealed class SessionContext
 {

@@ -1,6 +1,9 @@
+using Laby.Client.Console.Arguments;
+using Laby.Client.Console.Rendering;
+using Laby.Client.Console.Sessions;
 using SysConsole = System.Console;
 
-namespace Laby.Client.Console;
+namespace Laby.Client.Console.Bootstrap;
 
 internal static class ConsoleApp
 {

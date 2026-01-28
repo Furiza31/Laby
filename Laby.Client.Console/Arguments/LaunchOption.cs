@@ -1,4 +1,4 @@
-namespace Laby.Client.Console
+namespace Laby.Client.Console.Arguments
 {
     public enum LaunchOption
     {

@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace Laby.Client.Console;
+namespace Laby.Client.Console.Arguments;
 
 internal sealed record LaunchArguments(
     LaunchOption Option,

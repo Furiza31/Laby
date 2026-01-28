@@ -5,7 +5,7 @@ using Laby.Core.Tiles;
 using Laby.Infrastructure.ApiClient;
 using SysConsole = System.Console;
 
-namespace Laby.Client.Console;
+namespace Laby.Client.Console.Rendering;
 
 internal sealed class ExplorerRenderer
 {
