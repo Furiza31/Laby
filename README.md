@@ -84,3 +84,30 @@
 - **Application** → dépend de **Core**, **Algorithms**, **Mapping**, **Contracts**
 - **Apps** → dépendent de **Application** ou de **Core** + **Contracts**
 - **Infrastructure** → fournit les implémentations techniques et dépend de **Contracts**
+
+## Ajouter une clef API
+Pour se connecter à un serveur distant, une clef API peut être nécessaire.
+
+Executer la commande suivante pour ajouter une clef API au fichier de configuration local :
+
+```bash
+dotnet user-secrets set "Laby:AppKey" "<votre_clef_api_ici>"
+```
+
+## Utilisation de l’application console
+
+L’application console permet de lancer un crawler localement ou de se connecter à un serveur distant.
+
+### Commandes
+```bash
+# Lancer un crawler local
+./start.sh local
+
+# Lancer un crawler distant
+./start.sh remote <server_uri> [app_key]
+```
+
+### Aide
+```bash
+./start.sh help
+```

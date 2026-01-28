@@ -1,8 +1,13 @@
 {
   "profiles": {
-    "Laby.Client.Console": {
+    "Laby.Client.Console (Local)": {
       "commandName": "Project",
-      "commandLineArgs": "https://labyrinth.syllab.com EA2DF750-CB9F-45E1-AF92-909BE20630FB labyrinth9x7.json",
+      "commandLineArgs": "local",
+      "workingDirectory": "."
+    },
+    "Laby.Client.Console (Remote)": {
+      "commandName": "Project",
+      "commandLineArgs": "remote https://labyrinth.syllab.com",
       "workingDirectory": "."
     }
   }
