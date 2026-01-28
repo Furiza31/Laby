@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace ApiTypes
+namespace Laby.Contracts
 {
     /// <summary>
     /// Crawler information, including its position, direction, movement status, and items available.

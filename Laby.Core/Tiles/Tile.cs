@@ -1,6 +1,6 @@
-﻿using Labyrinth.Items;
+﻿using Laby.Core.Items;
 
-namespace Labyrinth.Tiles
+namespace Laby.Core.Tiles
 {
     /// <summary>
     /// Base class for all tiles in the labyrinth.

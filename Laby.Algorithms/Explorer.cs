@@ -1,8 +1,8 @@
-using Labyrinth.Crawl;
-using Labyrinth.Items;
-using Labyrinth.Tiles;
+using Laby.Core.Crawl;
+using Laby.Core.Items;
+using Laby.Core.Tiles;
 
-namespace Labyrinth
+namespace Laby.Algorithms
 {
     public class Explorer(ICrawler crawler, IExplorerStrategy strategy)
     {

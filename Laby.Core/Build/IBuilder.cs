@@ -1,7 +1,7 @@
-﻿using Labyrinth.Items;
-using Labyrinth.Tiles;
+﻿using Laby.Core.Items;
+using Laby.Core.Tiles;
 
-namespace Labyrinth.Build
+namespace Laby.Core.Build
 {
     public interface IBuilder
     {

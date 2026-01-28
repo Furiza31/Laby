@@ -1,15 +1,15 @@
-﻿using Labyrinth.Build;
-using Labyrinth.Crawl;
-using Labyrinth.Items;
-using Labyrinth.Tiles;
+﻿using Laby.Core.Build;
+using Laby.Core.Crawl;
+using Laby.Core.Items;
+using Laby.Core.Tiles;
 
-namespace LabyrinthTest.Crawl;
+namespace Laby.Tests.Crawl;
 
 [TestFixture(Description = "Integration test for the crawler implementation in the labyrinth")]
 public class LabyrinthCrawlerTest
 {
-    private static Labyrinth.Labyrinth NewLabyrinth(string ascii_map) =>
-        new Labyrinth.Labyrinth(new AsciiParser(ascii_map));
+    private static Laby.Core.Labyrinth NewLabyrinth(string ascii_map) =>
+        new Laby.Core.Labyrinth(new AsciiParser(ascii_map));
 
     private static ICrawler NewCrawlerFor(string ascii_map) =>
         NewLabyrinth(ascii_map).NewCrawler();

@@ -1,4 +1,4 @@
-﻿namespace Labyrinth.Items
+﻿namespace Laby.Core.Items
 {
     /// <summary>
     /// Inventory class that exposes the item it contains.

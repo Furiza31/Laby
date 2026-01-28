@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace ApiTypes
+namespace Laby.Contracts
 {
     /// <summary>
     /// Labyrinth tile types.

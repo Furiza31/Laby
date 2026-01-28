@@ -1,6 +1,6 @@
-﻿using Labyrinth.Crawl;
+﻿using Laby.Core.Crawl;
 
-namespace LabyrinthTest.Crawl;
+namespace Laby.Tests.Crawl;
 
 [TestFixture(Description = "Direction unit test class")]
 public class DirectionTest

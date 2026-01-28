@@ -1,4 +1,4 @@
-﻿namespace Labyrinth.Crawl
+﻿namespace Laby.Core.Crawl
 {
     public class CrawlingEventArgs(int x, int y, Direction dir) : EventArgs
     {

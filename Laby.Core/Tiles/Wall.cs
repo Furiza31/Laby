@@ -1,4 +1,4 @@
-﻿namespace Labyrinth.Tiles
+﻿namespace Laby.Core.Tiles
 {
     /// <summary>
     /// A wall tile in the labyrinth.

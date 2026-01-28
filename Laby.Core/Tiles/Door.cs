@@ -1,6 +1,6 @@
-﻿using Labyrinth.Items;
+﻿using Laby.Core.Items;
 
-namespace Labyrinth.Tiles
+namespace Laby.Core.Tiles
 {
     /// <summary>
     /// A door tile in the labyrinth either locked with no key or opened with key (no "closed and unlocked" state).

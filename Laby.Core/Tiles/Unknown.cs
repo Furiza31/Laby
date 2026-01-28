@@ -1,4 +1,4 @@
-﻿namespace Labyrinth.Tiles
+﻿namespace Laby.Core.Tiles
 {
     public class Unknown : Tile
     {

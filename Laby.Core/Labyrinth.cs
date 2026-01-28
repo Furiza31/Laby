@@ -1,9 +1,9 @@
-﻿using Labyrinth.Build;
-using Labyrinth.Crawl;
-using Labyrinth.Tiles;
+﻿using Laby.Core.Build;
+using Laby.Core.Crawl;
+using Laby.Core.Tiles;
 using System.Text;
 
-namespace Labyrinth
+namespace Laby.Core
 {
     public partial class Labyrinth
     {
