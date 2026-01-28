@@ -1,4 +1,4 @@
-namespace Labyrinth.Build
+namespace Laby.Core.Build
 {
 	/// <summary>
 	/// Provides data for an event that is triggered when a start position is found.

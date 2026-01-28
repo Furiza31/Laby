@@ -1,4 +1,4 @@
-﻿namespace Labyrinth.Items
+﻿namespace Laby.Core.Items
 {
     /// <summary>
     /// Collectable key item in the labyrinth.

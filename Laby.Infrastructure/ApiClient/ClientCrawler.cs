@@ -1,10 +1,10 @@
-﻿using Labyrinth.Crawl;
-using Labyrinth.Items;
+﻿using Laby.Core.Crawl;
+using Laby.Core.Items;
 using System.Diagnostics.CodeAnalysis;
-using Dto = ApiTypes;
+using Dto = Laby.Contracts;
 using System.Net.Http.Json;
 
-namespace Labyrinth.ApiClient
+namespace Laby.Infrastructure.ApiClient
 {
     public class ClientCrawler : ICrawler
     {

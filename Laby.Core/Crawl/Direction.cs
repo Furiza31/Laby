@@ -1,4 +1,4 @@
-﻿namespace Labyrinth.Crawl
+﻿namespace Laby.Core.Crawl
 {
     /// <summary>
     /// Direction in 2D space represented as cartesian deltas. 

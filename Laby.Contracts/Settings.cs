@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace ApiTypes
+namespace Laby.Contracts
 {
     /// <summary>
     /// Settings used to configure the crawler and the labyrinth (first crawler only).

@@ -1,11 +1,11 @@
-﻿using Labyrinth.Build;
-using Labyrinth.Crawl;
-using Labyrinth.Items;
-using Labyrinth.Tiles;
+﻿using Laby.Core.Build;
+using Laby.Core.Crawl;
+using Laby.Core.Items;
+using Laby.Core.Tiles;
 using System.Net.Http.Json;
-using Dto = ApiTypes;
+using Dto = Laby.Contracts;
 
-namespace Labyrinth.ApiClient
+namespace Laby.Infrastructure.ApiClient
 {
     /// <summary>
     /// Represents an active session with a contest server, providing access to crawlers, inventories, and

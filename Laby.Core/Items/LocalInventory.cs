@@ -1,4 +1,4 @@
-﻿namespace Labyrinth.Items
+﻿namespace Laby.Core.Items
 {
     public class LocalInventory : Inventory
     {

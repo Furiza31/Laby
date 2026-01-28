@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace ApiTypes
+namespace Laby.Contracts
 {
     /// <summary>
     /// Inventory item, including its type and an optional move requirement.

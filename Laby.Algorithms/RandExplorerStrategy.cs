@@ -1,7 +1,7 @@
-using Labyrinth.Sys;
-using Labyrinth.Tiles;
+using Laby.Algorithms.Sys;
+using Laby.Core.Tiles;
 
-namespace Labyrinth
+namespace Laby.Algorithms
 {
     public class RandExplorerStrategy(IEnumRandomizer<ExplorerAction> rnd) : IExplorerStrategy
     {

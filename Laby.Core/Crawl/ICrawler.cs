@@ -1,7 +1,7 @@
-﻿using Labyrinth.Items;
-using Labyrinth.Tiles;
+﻿using Laby.Core.Items;
+using Laby.Core.Tiles;
 
-namespace Labyrinth.Crawl
+namespace Laby.Core.Crawl
 {
     /// <summary>
     /// Labyrinth crawler interface.

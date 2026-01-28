@@ -1,4 +1,4 @@
-namespace Labyrinth
+namespace Laby.Algorithms
 {
     public enum ExplorerAction
     {

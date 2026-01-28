@@ -1,4 +1,4 @@
-﻿namespace Labyrinth.Sys
+﻿namespace Laby.Algorithms.Sys
 {
     public class BasicEnumRandomizer<TEnum> : IEnumRandomizer<TEnum> where TEnum : struct, Enum
     {

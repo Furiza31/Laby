@@ -1,9 +1,9 @@
-﻿using Labyrinth.Crawl;
-using Labyrinth.Items;
-using Labyrinth.Tiles;
-using Dto = ApiTypes;
+﻿using Laby.Core.Crawl;
+using Laby.Core.Items;
+using Laby.Core.Tiles;
+using Dto = Laby.Contracts;
 
-namespace Labyrinth.ApiClient
+namespace Laby.Infrastructure.ApiClient
 {
     public static class DtoHelperExtension
     {

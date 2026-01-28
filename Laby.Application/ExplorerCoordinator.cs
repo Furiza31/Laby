@@ -1,9 +1,9 @@
-using Labyrinth;
-using Labyrinth.Crawl;
-using Labyrinth.Items;
-using Labyrinth.Sys;
+using Laby.Algorithms;
+using Laby.Core.Crawl;
+using Laby.Core.Items;
+using Laby.Algorithms.Sys;
 
-namespace Labyrinth.Application
+namespace Laby.Application
 {
     public class ExplorerCoordinator
     {

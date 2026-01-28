@@ -1,7 +1,7 @@
-using Labyrinth.Crawl;
-using Labyrinth.Items;
+using Laby.Core.Crawl;
+using Laby.Core.Items;
 
-namespace Labyrinth
+namespace Laby.Algorithms
 {
     public interface IExplorerStrategy
     {
