@@ -11,23 +11,23 @@ internal sealed class ExplorerRenderer
 {
     private const int OffsetY = 2;
 
-    private readonly ExplorerCoordinator explorer;
-    private readonly Dictionary<Type, char> tileToChar;
-    private int prevX;
-    private int prevY;
+    private readonly ExplorerCoordinator _explorer;
+    private readonly Dictionary<Type, char> _tileToChar;
+    private int _prevX;
+    private int _prevY;
 
     public ExplorerRenderer(ExplorerCoordinator explorer)
     {
-        this.explorer = explorer;
-        tileToChar = new Dictionary<Type, char>
+        this._explorer = explorer;
+        _tileToChar = new Dictionary<Type, char>
         {
             [typeof(Room)] = ' ',
             [typeof(Wall)] = '#',
             [typeof(Door)] = '/'
         };
 
-        prevX = explorer.Crawler.X;
-        prevY = explorer.Crawler.Y;
+        _prevX = explorer.Crawler.X;
+        _prevY = explorer.Crawler.Y;
 
         explorer.DirectionChanged += DrawExplorer;
         explorer.PositionChanged += OnPositionChanged;
@@ -41,10 +41,10 @@ internal sealed class ExplorerRenderer
 
     private void OnPositionChanged(object? sender, CrawlingEventArgs e)
     {
-        SysConsole.SetCursorPosition(prevX, prevY);
+        SysConsole.SetCursorPosition(_prevX, _prevY);
         SysConsole.Write(' ');
         DrawExplorer(sender, e);
-        (prevX, prevY) = (e.X, e.Y + OffsetY);
+        (_prevX, _prevY) = (e.X, e.Y + OffsetY);
     }
 
     private void DrawExplorer(object? sender, CrawlingEventArgs e)
@@ -58,7 +58,7 @@ internal sealed class ExplorerRenderer
                 e.X + e.Direction.DeltaX,
                 e.Y + e.Direction.DeltaY + OffsetY
             );
-            SysConsole.Write(tileToChar[facingTileType]);
+            SysConsole.Write(_tileToChar[facingTileType]);
         }
 
         SysConsole.SetCursorPosition(e.X, e.Y + OffsetY);
