@@ -1,30 +1,46 @@
 using Laby.Algorithms;
 using Laby.Core.Crawl;
 using Laby.Core.Items;
+using Laby.Core.Mapping;
 using Laby.Algorithms.Sys;
+using Laby.Mapping;
 
 namespace Laby.Application
 {
     public class ExplorerCoordinator
     {
         public ExplorerCoordinator(ICrawler crawler)
-            : this(crawler, new RandExplorerStrategy(new BasicEnumRandomizer<ExplorerAction>()))
+            : this(
+                crawler,
+                new RandExplorerStrategy(new BasicEnumRandomizer<ExplorerAction>()),
+                new SharedLabyrinthMap()
+            )
         {
         }
 
-        public ExplorerCoordinator(ICrawler crawler, IEnumRandomizer<ExplorerAction> randomizer)
-            : this(crawler, new RandExplorerStrategy(randomizer))
+        public ExplorerCoordinator(ICrawler crawler, ILabyrinthMap sharedMap)
+            : this(
+                crawler,
+                new RandExplorerStrategy(new BasicEnumRandomizer<ExplorerAction>()),
+                sharedMap
+            )
         {
         }
 
         public ExplorerCoordinator(ICrawler crawler, IExplorerStrategy strategy)
+            : this(crawler, strategy, new SharedLabyrinthMap())
         {
-            _explorer = new Explorer(crawler, strategy);
+        }
+
+        public ExplorerCoordinator(ICrawler crawler, IExplorerStrategy strategy, ILabyrinthMap sharedMap)
+        {
+            _explorer = new Explorer(crawler, strategy, sharedMap);
             _explorer.PositionChanged += (_, e) => PositionChanged?.Invoke(this, e);
             _explorer.DirectionChanged += (_, e) => DirectionChanged?.Invoke(this, e);
         }
 
         public ICrawler Crawler => _explorer.Crawler;
+        public ILabyrinthMapReader SharedMap => _explorer.SharedMap;
 
         public Task<int> GetOut(int n, Inventory? bag = null) => _explorer.GetOut(n, bag);
 

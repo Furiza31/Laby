@@ -38,6 +38,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Laby.Core\Laby.Core.csproj" />
     <ProjectReference Include="..\Laby.Algorithms\Laby.Algorithms.csproj" />
+    <ProjectReference Include="..\Laby.Mapping\Laby.Mapping.csproj" />
   </ItemGroup>
 
 </Project>

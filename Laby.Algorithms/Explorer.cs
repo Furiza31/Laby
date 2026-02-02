@@ -1,15 +1,27 @@
 using Laby.Core.Crawl;
 using Laby.Core.Items;
+using Laby.Core.Mapping;
 using Laby.Core.Tiles;
 
 namespace Laby.Algorithms
 {
-    public class Explorer(ICrawler crawler, IExplorerStrategy strategy)
+    public class Explorer
     {
-        private readonly ICrawler _crawler = crawler;
-        private readonly IExplorerStrategy _strategy = strategy;
+        public Explorer(ICrawler crawler, IExplorerStrategy strategy, ILabyrinthMap sharedMap)
+        {
+            ArgumentNullException.ThrowIfNull(crawler);
+            ArgumentNullException.ThrowIfNull(strategy);
+            ArgumentNullException.ThrowIfNull(sharedMap);
+
+            _crawler = crawler;
+            _strategy = strategy;
+            _sharedMap = sharedMap;
+            
+            _sharedMap.Observe(_crawler.X, _crawler.Y, typeof(Room));
+        }
 
         public ICrawler Crawler => _crawler;
+        public ILabyrinthMapReader SharedMap => _sharedMap;
 
         public async Task<int> GetOut(int n, Inventory? bag = null)
         {
@@ -18,14 +30,17 @@ namespace Laby.Algorithms
             bag ??= new MyInventory();
             for (; n > 0; n--)
             {
+                var facingX = _crawler.X + _crawler.Direction.DeltaX;
+                var facingY = _crawler.Y + _crawler.Direction.DeltaY;
                 var facingTileType = await _crawler.FacingTileType;
+                _sharedMap.Observe(facingX, facingY, facingTileType);
 
                 if (facingTileType == typeof(Outside))
                 {
                     break;
                 }
 
-                var action = _strategy.NextAction(new ExplorerContext(_crawler, facingTileType, bag));
+                var action = _strategy.NextAction(new ExplorerContext(_crawler, facingTileType, bag, _sharedMap));
                 EventHandler<CrawlingEventArgs>? changeEvent;
 
                 if (action == ExplorerAction.Walk
@@ -36,6 +51,7 @@ namespace Laby.Algorithms
                         roomContent,
                         roomContent.ItemTypes.Select(_ => true).ToList()
                     );
+                    _sharedMap.Observe(_crawler.X, _crawler.Y, facingTileType);
                     changeEvent = PositionChanged;
                 }
                 else
@@ -53,5 +69,9 @@ namespace Laby.Algorithms
         public event EventHandler<CrawlingEventArgs>? PositionChanged;
 
         public event EventHandler<CrawlingEventArgs>? DirectionChanged;
+
+        private readonly ICrawler _crawler;
+        private readonly IExplorerStrategy _strategy;
+        private readonly ILabyrinthMap _sharedMap;
     }
 }
