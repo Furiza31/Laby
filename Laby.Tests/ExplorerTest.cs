@@ -2,6 +2,7 @@
 using Laby.Core.Build;
 using Laby.Core.Crawl;
 using Laby.Algorithms.Sys;
+using Laby.Mapping;
 using Moq;
 
 namespace Laby.Tests;
@@ -41,7 +42,8 @@ public class ExplorerTest
         );
         var explorer = new Explorer(
             laby.NewCrawler(),
-            new RandExplorerStrategy(mockRnd.Object)
+            new RandExplorerStrategy(mockRnd.Object),
+            new SharedLabyrinthMap()
         );
         events = new ExplorerEventsCatcher(explorer);
         return explorer;
