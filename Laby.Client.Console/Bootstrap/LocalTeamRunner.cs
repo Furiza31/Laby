@@ -38,13 +38,14 @@ internal static class LocalTeamRunner
             .Select(strategy => new Explorer(labyrinth.NewCrawler(), strategy, sharedMap))
             .ToArray();
         var bags = explorers.Select(_ => (Inventory)new MyInventory()).ToArray();
-        var renderer = new TeamExplorerRenderer(explorers, labyrinth);
+        var renderer = new TeamExplorerRenderer(explorers, strategies, sharedMap, labyrinth, MaxMoves);
         renderer.DrawLabyrinth();
 
         var remainingMoves = await Task.WhenAll(
             explorers.Select((explorer, i) => Task.Run(() => explorer.GetOut(MaxMoves, bags[i])))
         );
 
+        renderer.MoveCursorBelowViewport();
         SysConsole.WriteLine();
         SysConsole.WriteLine("Run summary:");
         for (var i = 0; i < remainingMoves.Length; i++)

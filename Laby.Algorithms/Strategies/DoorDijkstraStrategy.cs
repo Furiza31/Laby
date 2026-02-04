@@ -36,7 +36,7 @@ namespace Laby.Algorithms
                     current,
                     p => IsDoorTarget(context, map, current, p),
                     rotationOffset,
-                    (position, tileType) => CanEnter(context, position, tileType),
+                    (position, tileType) => DoorTraversalPolicy.CanEnter(context, position, tileType),
                     out var path))
             {
                 return false;
@@ -97,21 +97,6 @@ namespace Laby.Algorithms
 
             return !context.Memory.IsDoorKnownOpen(position)
                    && !context.Memory.IsDoorBlocked(position, context.Bag);
-        }
-
-        private static bool CanEnter(ExplorerContext context, MapPosition position, Type tileType)
-        {
-            if (tileType != typeof(Door))
-            {
-                return true;
-            }
-
-            if (context.Map is not null && context.Map.IsDoorKnownOpen(position.X, position.Y))
-            {
-                return true;
-            }
-
-            return context.Memory is null || !context.Memory.IsDoorBlocked(position, context.Bag);
         }
     }
 }
