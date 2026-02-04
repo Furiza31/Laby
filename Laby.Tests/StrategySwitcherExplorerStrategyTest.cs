@@ -59,6 +59,43 @@ public class StrategySwitcherExplorerStrategyTest
     }
 
     [Test]
+    public void FrontierStrategyLetsSecondExplorerPickAnotherFrontierWhenFirstOneAlreadyClaimed()
+    {
+        var map = new SharedLabyrinthMap();
+        map.Observe(1, 1, typeof(Room));
+        map.Observe(2, 1, typeof(Room));
+        map.Observe(1, 2, typeof(Room));
+        map.Observe(1, 0, typeof(Wall));
+        map.Observe(0, 1, typeof(Wall));
+
+        var firstCrawler = NewCrawlerAt(1, 1, Direction.East);
+        var secondCrawler = NewCrawlerAt(1, 1, Direction.East);
+        var firstStrategy = new FrontierDijkstraStrategy();
+        var secondStrategy = new FrontierDijkstraStrategy();
+
+        var firstAction = firstStrategy.NextAction(new ExplorerContext(
+            firstCrawler.Object,
+            typeof(Room),
+            new MyInventory(),
+            map,
+            memory: null,
+            explorerId: 101
+        ));
+        var secondAction = secondStrategy.NextAction(new ExplorerContext(
+            secondCrawler.Object,
+            typeof(Room),
+            new MyInventory(),
+            map,
+            memory: null,
+            explorerId: 202
+        ));
+
+        using var all = Assert.EnterMultipleScope();
+        Assert.That(firstAction, Is.EqualTo(ExplorerAction.Walk));
+        Assert.That(secondAction, Is.EqualTo(ExplorerAction.TurnLeft));
+    }
+
+    [Test]
     public void NextActionUsesDoorStrategyWhenBagContainsKeyAndDoorIsKnown()
     {
         var map = new SharedLabyrinthMap();

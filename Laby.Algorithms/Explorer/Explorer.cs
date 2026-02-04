@@ -16,6 +16,7 @@ namespace Laby.Algorithms
             _crawler = crawler;
             _strategy = strategy;
             _sharedMap = sharedMap;
+            _explorerId = Interlocked.Increment(ref _nextExplorerId);
             
             _sharedMap.Observe(_crawler.X, _crawler.Y, typeof(Room));
         }
@@ -45,7 +46,8 @@ namespace Laby.Algorithms
                     facingTileType,
                     bag,
                     _sharedMap,
-                    _memory));
+                    _memory,
+                    _explorerId));
                 EventHandler<CrawlingEventArgs>? changeEvent;
 
                 if (action == ExplorerAction.Walk
@@ -92,5 +94,7 @@ namespace Laby.Algorithms
         private readonly IExplorerStrategy _strategy;
         private readonly ILabyrinthMap _sharedMap;
         private readonly ExplorerMemory _memory = new();
+        private readonly long _explorerId;
+        private static long _nextExplorerId;
     }
 }

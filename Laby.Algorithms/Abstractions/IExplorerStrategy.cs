@@ -12,7 +12,7 @@ namespace Laby.Algorithms
     public readonly struct ExplorerContext
     {
         public ExplorerContext(ICrawler crawler, Type facingTileType, Inventory bag)
-            : this(crawler, facingTileType, bag, map: null, memory: null)
+            : this(crawler, facingTileType, bag, map: null, memory: null, explorerId: 0)
         {
         }
 
@@ -21,13 +21,15 @@ namespace Laby.Algorithms
             Type facingTileType,
             Inventory bag,
             ILabyrinthMapReader? map,
-            ExplorerMemory? memory = null)
+            ExplorerMemory? memory = null,
+            long explorerId = 0)
         {
             Crawler = crawler;
             FacingTileType = facingTileType;
             Bag = bag;
             Map = map;
             Memory = memory;
+            ExplorerId = explorerId;
         }
 
         public ICrawler Crawler { get; }
@@ -39,5 +41,7 @@ namespace Laby.Algorithms
         public ILabyrinthMapReader? Map { get; }
 
         public ExplorerMemory? Memory { get; }
+
+        public long ExplorerId { get; }
     }
 }
