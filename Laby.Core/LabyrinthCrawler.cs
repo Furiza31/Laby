@@ -36,6 +36,11 @@ namespace Laby.Core
             
             private bool Open(Door door, Inventory walkerInventory)
             {
+                if (door.IsOpened)
+                {
+                    return true;
+                }
+
                 if (walkerInventory is not LocalInventory keyRing)
                 {
                     throw new NotSupportedException("Local inventories only");

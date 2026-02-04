@@ -47,10 +47,13 @@ namespace Laby.Algorithms
                     && facingTileType != typeof(Wall)
                     && await _crawler.TryWalk(bag) is Inventory roomContent)
                 {
-                    await bag.TryMoveItemsFrom(
-                        roomContent,
-                        roomContent.ItemTypes.Select(_ => true).ToList()
-                    );
+                    if (facingTileType != typeof(Door))
+                    {
+                        await bag.TryMoveItemsFrom(
+                            roomContent,
+                            roomContent.ItemTypes.Select(_ => true).ToList()
+                        );
+                    }
                     _sharedMap.Observe(_crawler.X, _crawler.Y, facingTileType);
                     changeEvent = PositionChanged;
                 }

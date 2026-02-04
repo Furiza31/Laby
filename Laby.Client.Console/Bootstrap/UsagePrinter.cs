@@ -18,6 +18,7 @@ Usage:
   Laby.Client.Console remote <serverUrl> [appKeyGuid] [settings.json]
 
 Notes:
+  - Local mode starts 3 explorers sharing one map.
   - If appKeyGuid is omitted in remote mode, it is read from user secrets key "Laby:AppKey".
   - Legacy: you can still call with "<serverUrl> <appKeyGuid> [settings.json]" (without "remote").
 """);
