@@ -36,6 +36,7 @@ namespace Laby.Algorithms
                     current,
                     p => TryDirectionToOutside(map, p, out _),
                     rotationOffset,
+                    (position, tileType) => CanEnter(context, position, tileType),
                     out var path))
             {
                 return false;
@@ -72,6 +73,21 @@ namespace Laby.Algorithms
                 rotationOffset,
                 out direction
             );
+        }
+
+        private static bool CanEnter(ExplorerContext context, MapPosition position, Type tileType)
+        {
+            if (tileType != typeof(Door))
+            {
+                return true;
+            }
+
+            if (context.Map is not null && context.Map.IsDoorKnownOpen(position.X, position.Y))
+            {
+                return true;
+            }
+
+            return context.Memory is null || !context.Memory.IsDoorBlocked(position, context.Bag);
         }
     }
 }

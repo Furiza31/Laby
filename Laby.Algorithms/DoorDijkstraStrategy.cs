@@ -1,7 +1,6 @@
-using Laby.Core.Items;
 using Laby.Core.Mapping;
 using Laby.Core.Tiles;
-using System.Runtime.CompilerServices;
+using Laby.Core.Items;
 
 namespace Laby.Algorithms
 {
@@ -21,25 +20,13 @@ namespace Laby.Algorithms
 
             if (context.Map is null || !context.Bag.ItemTypes.Any(type => type == typeof(Key)))
             {
-                _pendingDoor = null;
                 return false;
             }
 
             var map = context.Map;
             var current = new MapPosition(context.Crawler.X, context.Crawler.Y);
-            var keySignature = GetKeySignature(context.Bag);
-
-            if (map.GetTileType(current.X, current.Y) == typeof(Door))
+            if (TryAdjacentDoorDirection(context, map, current, out var adjacentDirection))
             {
-                _crossedDoors.Add(current);
-            }
-
-            ResolvePendingAttempt(current, keySignature);
-
-            if (TryAdjacentDoorDirection(map, current, keySignature, out var adjacentDirection, out var adjacentDoor))
-            {
-                _pendingDoor = adjacentDoor;
-                _pendingKeySignature = keySignature;
                 action = MapPathing.ActionToward(context.Crawler, adjacentDirection.Dx, adjacentDirection.Dy);
                 return true;
             }
@@ -47,11 +34,9 @@ namespace Laby.Algorithms
             if (!MapPathing.TryFindShortestPath(
                     map,
                     current,
-                    p => p != current
-                         && map.GetTileType(p.X, p.Y) == typeof(Door)
-                         && !_crossedDoors.Contains(p)
-                         && !IsDoorBlockedForCurrentKeys(p, keySignature),
+                    p => IsDoorTarget(context, map, current, p),
                     rotationOffset,
+                    (position, tileType) => CanEnter(context, position, tileType),
                     out var path))
             {
                 return false;
@@ -68,78 +53,65 @@ namespace Laby.Algorithms
         }
 
         private bool TryAdjacentDoorDirection(
+            ExplorerContext context,
             ILabyrinthMapReader map,
             MapPosition current,
-            int keySignature,
-            out (int Dx, int Dy) direction,
-            out MapPosition doorPosition)
+            out (int Dx, int Dy) direction)
         {
             foreach (var candidate in MapPathing.OrderedDirections(rotationOffset))
             {
                 var next = new MapPosition(current.X + candidate.Dx, current.Y + candidate.Dy);
-                if (map.GetTileType(next.X, next.Y) != typeof(Door))
-                {
-                    continue;
-                }
-
-                if (_crossedDoors.Contains(next) || IsDoorBlockedForCurrentKeys(next, keySignature))
+                if (!IsDoorTarget(context, map, current, next))
                 {
                     continue;
                 }
 
                 direction = candidate;
-                doorPosition = next;
                 return true;
             }
 
             direction = default;
-            doorPosition = default;
             return false;
         }
 
-        private void ResolvePendingAttempt(MapPosition current, int keySignature)
+        private static bool IsDoorTarget(
+            ExplorerContext context,
+            ILabyrinthMapReader map,
+            MapPosition current,
+            MapPosition position)
         {
-            if (_pendingDoor is not MapPosition pendingDoor)
+            if (position == current || map.GetTileType(position.X, position.Y) != typeof(Door))
             {
-                return;
+                return false;
             }
 
-            if (current == pendingDoor)
+            if (map.IsDoorKnownOpen(position.X, position.Y))
             {
-                _crossedDoors.Add(pendingDoor);
-                _blockedDoors.Remove(pendingDoor);
-            }
-            else if (_pendingKeySignature == keySignature)
-            {
-                _blockedDoors[pendingDoor] = keySignature;
+                return false;
             }
 
-            _pendingDoor = null;
+            if (context.Memory is null)
+            {
+                return true;
+            }
+
+            return !context.Memory.IsDoorKnownOpen(position)
+                   && !context.Memory.IsDoorBlocked(position, context.Bag);
         }
 
-        private bool IsDoorBlockedForCurrentKeys(MapPosition doorPosition, int keySignature) =>
-            _blockedDoors.TryGetValue(doorPosition, out var blockedSignature)
-            && blockedSignature == keySignature;
-
-        private static int GetKeySignature(Inventory bag)
+        private static bool CanEnter(ExplorerContext context, MapPosition position, Type tileType)
         {
-            var hash = new HashCode();
-            hash.Add(bag.ItemTypes.Count());
-
-            if (bag is MyInventory localBag)
+            if (tileType != typeof(Door))
             {
-                foreach (var item in localBag.Items)
-                {
-                    hash.Add(RuntimeHelpers.GetHashCode(item));
-                }
+                return true;
             }
 
-            return hash.ToHashCode();
-        }
+            if (context.Map is not null && context.Map.IsDoorKnownOpen(position.X, position.Y))
+            {
+                return true;
+            }
 
-        private readonly Dictionary<MapPosition, int> _blockedDoors = new();
-        private readonly HashSet<MapPosition> _crossedDoors = new();
-        private MapPosition? _pendingDoor;
-        private int _pendingKeySignature;
+            return context.Memory is null || !context.Memory.IsDoorBlocked(position, context.Bag);
+        }
     }
 }

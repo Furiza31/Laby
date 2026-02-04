@@ -20,6 +20,9 @@ namespace Laby.Mapping
         public IReadOnlyDictionary<MapPosition, Type> Snapshot() =>
             new Dictionary<MapPosition, Type>(_observedTiles);
 
+        public bool IsDoorKnownOpen(int x, int y) =>
+            _openedDoors.ContainsKey(new MapPosition(x, y));
+
         public void Observe(int x, int y, Type tileType)
         {
             ArgumentNullException.ThrowIfNull(tileType);
@@ -62,6 +65,14 @@ namespace Laby.Mapping
             }
         }
 
+        public void MarkDoorOpened(int x, int y)
+        {
+            var position = new MapPosition(x, y);
+            _openedDoors[position] = true;
+            Observe(x, y, typeof(Door));
+        }
+
         private readonly ConcurrentDictionary<MapPosition, Type> _observedTiles = new();
+        private readonly ConcurrentDictionary<MapPosition, bool> _openedDoors = new();
     }
 }

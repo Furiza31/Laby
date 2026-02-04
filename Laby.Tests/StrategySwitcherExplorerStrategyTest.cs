@@ -93,20 +93,25 @@ public class StrategySwitcherExplorerStrategyTest
         var crawler = NewCrawlerAt(1, 1, Direction.East);
         var strategy = NewAdaptiveStrategy();
         var bag = new MyInventory(new Key());
+        var memory = new ExplorerMemory();
 
         var firstAction = strategy.NextAction(new ExplorerContext(
             crawler.Object,
             typeof(Door),
             bag,
-            map
+            map,
+            memory
         ));
+
+        memory.MarkDoorBlocked(new Laby.Core.Mapping.MapPosition(2, 1), bag);
         crawler.Object.Direction.TurnLeft(); // explorer turns left when walk failed
 
         var secondAction = strategy.NextAction(new ExplorerContext(
             crawler.Object,
             typeof(Wall),
             bag,
-            map
+            map,
+            memory
         ));
 
         using var all = Assert.EnterMultipleScope();

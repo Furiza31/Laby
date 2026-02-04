@@ -40,7 +40,12 @@ namespace Laby.Algorithms
                     break;
                 }
 
-                var action = _strategy.NextAction(new ExplorerContext(_crawler, facingTileType, bag, _sharedMap));
+                var action = _strategy.NextAction(new ExplorerContext(
+                    _crawler,
+                    facingTileType,
+                    bag,
+                    _sharedMap,
+                    _memory));
                 EventHandler<CrawlingEventArgs>? changeEvent;
 
                 if (action == ExplorerAction.Walk
@@ -54,11 +59,21 @@ namespace Laby.Algorithms
                             roomContent.ItemTypes.Select(_ => true).ToList()
                         );
                     }
+                    else
+                    {
+                        _sharedMap.MarkDoorOpened(_crawler.X, _crawler.Y);
+                        _memory.MarkDoorOpened(new MapPosition(_crawler.X, _crawler.Y));
+                    }
                     _sharedMap.Observe(_crawler.X, _crawler.Y, facingTileType);
                     changeEvent = PositionChanged;
                 }
                 else
                 {
+                    if (action == ExplorerAction.Walk && facingTileType == typeof(Door))
+                    {
+                        _memory.MarkDoorBlocked(new MapPosition(facingX, facingY), bag);
+                    }
+
                     _crawler.Direction.TurnLeft();
                     changeEvent = DirectionChanged;
                 }
@@ -76,5 +91,6 @@ namespace Laby.Algorithms
         private readonly ICrawler _crawler;
         private readonly IExplorerStrategy _strategy;
         private readonly ILabyrinthMap _sharedMap;
+        private readonly ExplorerMemory _memory = new();
     }
 }

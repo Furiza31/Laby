@@ -56,6 +56,7 @@ namespace Laby.Algorithms
             MapPosition start,
             Func<MapPosition, bool> isGoal,
             int rotationOffset,
+            Func<MapPosition, Type, bool>? canEnter,
             out IReadOnlyList<MapPosition> path)
         {
             if (isGoal(start))
@@ -81,7 +82,13 @@ namespace Laby.Algorithms
                         continue;
                     }
 
-                    if (!IsNavigable(map.GetTileType(next.X, next.Y)))
+                    var nextType = map.GetTileType(next.X, next.Y);
+                    if (!IsNavigable(nextType))
+                    {
+                        continue;
+                    }
+
+                    if (canEnter is not null && !canEnter(next, nextType))
                     {
                         continue;
                     }
@@ -100,6 +107,21 @@ namespace Laby.Algorithms
             path = Array.Empty<MapPosition>();
             return false;
         }
+
+        public static bool TryFindShortestPath(
+            ILabyrinthMapReader map,
+            MapPosition start,
+            Func<MapPosition, bool> isGoal,
+            int rotationOffset,
+            out IReadOnlyList<MapPosition> path) =>
+            TryFindShortestPath(
+                map,
+                start,
+                isGoal,
+                rotationOffset,
+                canEnter: null,
+                out path
+            );
 
         private static IReadOnlyList<MapPosition> BuildPath(
             MapPosition start,

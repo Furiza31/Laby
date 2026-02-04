@@ -15,15 +15,21 @@ internal static class LocalTeamRunner
     public static async Task<int> RunAsync()
     {
         var labyrinth = new Labyrinth(new AsciiParser("""
-                                                      +--+--------+
-                                                      |  /        |
-                                                      |  +--+--+  |
-                                                      |     |k    |
-                                                      +--+  |  +--+
-                                                         |k  x    |
-                                                      +  +-------/|
-                                                      |           |
-                                                      +-----------+
+                                                      +---------------+
+                                                      |               |
+                                                      | +----/------+ |
+                                                      | |        k  |k|
+                                                      | | +--/----+ | |
+                                                      | / |    k  | | |
+                                                      | | | +---+ | | |
+                                                      | | /   |x  | | |
+                                                      | | | +-+-+ | | |
+                                                      | | |  k|   | | |
+                                                      | | +--+--+ | | |
+                                                      | |        k| | |
+                                                      | +---------+-+-|
+                                                      |               /
+                                                      +---------------+
                                                       """));
 
         var sharedMap = new SharedLabyrinthMap();

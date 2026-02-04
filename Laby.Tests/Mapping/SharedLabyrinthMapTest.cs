@@ -179,4 +179,40 @@ public class SharedLabyrinthMapTest
             "At least one explorer should reach the outside in the provided key-and-door maze."
         );
     }
+
+    [Test]
+    public async Task ThreeExplorersEscapeFromComplexDoorAndKeyMaze()
+    {
+        var labyrinth = new Laby.Core.Labyrinth(new AsciiParser("""
+            +---------------+
+            |               |
+            | +----/------+ |
+            | |        k  |k|
+            | | +--/----+ | |
+            | / |    k  | | |
+            | | | +---+ | | |
+            | | /   |x  | | |
+            | | | +-+-+ | | |
+            | | |  k|   | | |
+            | | +--+--+ | | |
+            | |        k| | |
+            | +---------+-+-|
+            |               /
+            +---------------+
+            """));
+        var map = new SharedLabyrinthMap();
+        var explorers = ExplorerTeamStrategyFactory.CreateDefault()
+            .Select(strategy => new Explorer(labyrinth.NewCrawler(), strategy, map))
+            .ToArray();
+
+        var remainingMoves = await Task.WhenAll(
+            explorers.Select(explorer => Task.Run(() => explorer.GetOut(5000)))
+        );
+
+        Assert.That(
+            remainingMoves.Any(moves => moves > 0),
+            Is.True,
+            "At least one explorer should reach the outside in the complex key-and-door maze."
+        );
+    }
 }
