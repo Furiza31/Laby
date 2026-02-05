@@ -21,6 +21,11 @@ internal static class ConsoleApp
             return 1;
         }
 
+        if (launchArgs.Option == LaunchOption.Local)
+        {
+            return await LocalTeamRunner.RunAsync();
+        }
+
         var (session, sessionError) = await SessionFactory.TryCreateAsync(launchArgs);
         if (session is null)
         {

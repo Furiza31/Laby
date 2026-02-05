@@ -68,10 +68,11 @@ namespace Laby.Core
         /// </summary>
         /// <returns>New crawler instance used to browse the labyrinth.</returns>
         public ICrawler NewCrawler() =>
-            new LabyrinthCrawler(_start.X, _start.Y, _tiles);
+            new LabyrinthCrawler(_start.X, _start.Y, _tiles, _tilesLock);
 
         private (int X, int Y) _start = (-1, -1);
 
         private readonly Tile[,] _tiles;
+        private readonly object _tilesLock = new();
     }
 }

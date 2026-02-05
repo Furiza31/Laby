@@ -6,7 +6,7 @@ namespace Laby.Core
 {
     public partial class Labyrinth
     {
-        private class LabyrinthCrawler(int x, int y, Tile[,] tiles) : ICrawler
+        private class LabyrinthCrawler(int x, int y, Tile[,] tiles, object tilesLock) : ICrawler
         {
             public int X => _x;
 
@@ -36,6 +36,11 @@ namespace Laby.Core
             
             private bool Open(Door door, Inventory walkerInventory)
             {
+                if (door.IsOpened)
+                {
+                    return true;
+                }
+
                 if (walkerInventory is not LocalInventory keyRing)
                 {
                     throw new NotSupportedException("Local inventories only");
@@ -55,16 +60,19 @@ namespace Laby.Core
 
             private T ProcessFacingTile<T>(Func<int, int, Tile, T> process)
             {
-                int facingX = _x + _direction.DeltaX,
-                    facingY = _y + _direction.DeltaY;
+                lock (_tilesLock)
+                {
+                    int facingX = _x + _direction.DeltaX,
+                        facingY = _y + _direction.DeltaY;
 
-                return process(
-                    facingX, facingY,
-                    IsOut(facingX, dimension: 0) ||
-                    IsOut(facingY, dimension: 1)
-                        ? Outside.Singleton
-                        : _tiles[facingX, facingY]
-                 );
+                    return process(
+                        facingX, facingY,
+                        IsOut(facingX, dimension: 0) ||
+                        IsOut(facingY, dimension: 1)
+                            ? Outside.Singleton
+                            : _tiles[facingX, facingY]
+                    );
+                }
             }
 
             private int _x = x;
@@ -72,6 +80,7 @@ namespace Laby.Core
 
             private readonly Direction _direction = Direction.North;
             private readonly Tile[,] _tiles = tiles;
+            private readonly object _tilesLock = tilesLock;
         }
     }
 }

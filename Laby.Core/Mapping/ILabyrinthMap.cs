@@ -19,6 +19,11 @@ namespace Laby.Core.Mapping
         /// Returns a snapshot of all observed tiles.
         /// </summary>
         IReadOnlyDictionary<MapPosition, Type> Snapshot();
+
+        /// <summary>
+        /// True when a door at the given position is known to be opened by any explorer.
+        /// </summary>
+        bool IsDoorKnownOpen(int x, int y);
     }
 
     /// <summary>
@@ -30,5 +35,10 @@ namespace Laby.Core.Mapping
         /// Stores a tile type observation at the provided coordinates.
         /// </summary>
         void Observe(int x, int y, Type tileType);
+
+        /// <summary>
+        /// Marks a door as opened at the provided coordinates.
+        /// </summary>
+        void MarkDoorOpened(int x, int y);
     }
 }

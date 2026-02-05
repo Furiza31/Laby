@@ -3,4 +3,4 @@
 set -e
 
 # Start the application
-dotnet run --no-launch-profile --project Laby.Client.Console -- "$@"
+dotnet run -p:BuildInParallel=false --no-launch-profile --project Laby.Client.Console -- "$@"

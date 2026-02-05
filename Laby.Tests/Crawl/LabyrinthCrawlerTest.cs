@@ -297,5 +297,60 @@ public class LabyrinthCrawlerTest
         Assert.That(test.Direction, Is.EqualTo(Direction.South));
         Assert.That(test.FacingTileType.Result, Is.EqualTo(typeof(Outside)));
     }
+
+    [Test]
+    public async Task OpenedDoorStaysOpenForOtherCrawlers()
+    {
+        var laby = NewLabyrinth("""
+            +--+
+            |xk|
+            +-/|
+            """);
+        var first = laby.NewCrawler();
+        var second = laby.NewCrawler();
+
+        first.Direction.TurnRight();
+        var firstBag = await first.TryWalk(new MyInventory());
+        first.Direction.TurnRight();
+        var firstThroughDoor = await first.TryWalk(firstBag!);
+
+        second.Direction.TurnRight();
+        var secondBag = await second.TryWalk(new MyInventory());
+        second.Direction.TurnRight();
+        var secondThroughDoor = await second.TryWalk(secondBag!);
+
+        using var all = Assert.EnterMultipleScope();
+        Assert.That(firstThroughDoor, Is.Not.Null);
+        Assert.That(secondBag!.HasItems, Is.False, "Second crawler should not need a key once the door is open.");
+        Assert.That(secondThroughDoor, Is.Not.Null);
+        Assert.That(second.X, Is.EqualTo(2));
+        Assert.That(second.Y, Is.EqualTo(2));
+        Assert.That(second.Direction, Is.EqualTo(Direction.South));
+    }
+
+    [Test]
+    public async Task WalkThroughOpenedDoorWithKeyInBagDoesNotThrow()
+    {
+        var laby = NewLabyrinth("""
+            +--+
+            |xk|
+            +-/|
+            """);
+        var opener = laby.NewCrawler();
+        var second = laby.NewCrawler();
+
+        opener.Direction.TurnRight();
+        var openerBag = await opener.TryWalk(new MyInventory());
+        opener.Direction.TurnRight();
+        await opener.TryWalk(openerBag!);
+
+        second.Direction.TurnRight();
+        var secondBag = await second.TryWalk(new MyInventory());
+        second.Direction.TurnRight();
+
+        Inventory? throughDoor = null;
+        Assert.DoesNotThrowAsync(async () => throughDoor = await second.TryWalk(secondBag!));
+        Assert.That(throughDoor, Is.Not.Null);
+    }
     #endregion
 }
