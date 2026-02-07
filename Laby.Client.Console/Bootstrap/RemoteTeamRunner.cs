@@ -2,6 +2,7 @@ using Laby.Algorithms;
 using Laby.Client.Console.Arguments;
 using Laby.Client.Console.Rendering;
 using Laby.Client.Console.Sessions;
+using System.Diagnostics;
 using SysConsole = System.Console;
 
 namespace Laby.Client.Console.Bootstrap;
@@ -32,9 +33,22 @@ internal static class RemoteTeamRunner
         SysConsole.Clear();
         renderer.DrawLabyrinth();
 
+        var durations = new TimeSpan[session.Explorers.Count];
         var remainingMoves = await Task.WhenAll(
             session.Explorers.Select(
-                (explorer, i) => Task.Run(() => explorer.GetOut(MaxMoves, session.Bags[i]))
+                (explorer, i) => Task.Run(async () =>
+                {
+                    var stopwatch = Stopwatch.StartNew();
+                    try
+                    {
+                        return await explorer.GetOut(MaxMoves, session.Bags[i]);
+                    }
+                    finally
+                    {
+                        stopwatch.Stop();
+                        durations[i] = stopwatch.Elapsed;
+                    }
+                })
             )
         );
 
@@ -45,7 +59,12 @@ internal static class RemoteTeamRunner
         {
             var adaptive = session.Strategies[i] as AdaptiveExplorerStrategy;
             var mode = adaptive?.CurrentStrategyName ?? session.Strategies[i].GetType().Name;
-            SysConsole.WriteLine($"Explorer #{i + 1}: remaining={remainingMoves[i]}, mode={mode}");
+            var status = remainingMoves[i] > 0 ? "exit reached" : "max moves";
+            var elapsed = durations[i];
+            var elapsedText = $"{(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00}:{elapsed.Milliseconds:000}";
+            SysConsole.WriteLine(
+                $"Explorer #{i + 1}: remaining={remainingMoves[i]}, elapsed={elapsedText}, status={status}, mode={mode}"
+            );
         }
 
         await session.Contest.Close();
