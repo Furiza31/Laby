@@ -1,8 +1,4 @@
 using Laby.Client.Console.Arguments;
-using Laby.Client.Console.Rendering;
-using Laby.Client.Console.Sessions;
-using SysConsole = System.Console;
-
 namespace Laby.Client.Console.Bootstrap;
 
 internal static class ConsoleApp
@@ -26,24 +22,6 @@ internal static class ConsoleApp
             return await LocalTeamRunner.RunAsync();
         }
 
-        var (session, sessionError) = await SessionFactory.TryCreateAsync(launchArgs);
-        if (session is null)
-        {
-            UsagePrinter.Print(sessionError);
-            return 1;
-        }
-
-        var renderer = new ExplorerRenderer(session.Explorer);
-
-        SysConsole.Clear();
-        renderer.DrawLabyrinth(session.Labyrinth);
-        await session.Explorer.GetOut(3000, session.Bag);
-
-        if (session.Contest is not null)
-        {
-            await session.Contest.Close();
-        }
-
-        return 0;
+        return await RemoteTeamRunner.RunAsync(launchArgs);
     }
 }

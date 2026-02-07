@@ -1,7 +1,9 @@
+using Laby.Algorithms;
 using Laby.Core;
 using Laby.Core.Build;
 using Laby.Infrastructure.ApiClient;
 using Laby.Client.Console.Arguments;
+using Laby.Mapping;
 using Microsoft.Extensions.Configuration;
 using Dto = Laby.Contracts;
 using System.Text.Json;
@@ -29,21 +31,9 @@ internal static class SessionFactory
             return (new SessionContext(localLabyrinth, localCrawler, null, null), null);
         }
 
-        var appKeyValue = args.AppKeyText;
-        if (string.IsNullOrWhiteSpace(appKeyValue))
+        if (!TryResolveRemoteArguments(args, out var appKey, out var settings, out var error))
         {
-            appKeyValue = UserSecretsReader.GetValue("Laby:AppKey");
-        }
-
-        if (!Guid.TryParse(appKeyValue, out var appKey))
-        {
-            return (null, "Missing or invalid appKey. Provide it or set user secret \"Laby:AppKey\".");
-        }
-
-        Dto.Settings? settings = null;
-        if (!string.IsNullOrWhiteSpace(args.SettingsPath))
-        {
-            settings = JsonSerializer.Deserialize<Dto.Settings>(File.ReadAllText(args.SettingsPath));
+            return (null, error);
         }
 
         var contest = await ContestSession.Open(args.ServerUri!, appKey, settings);
@@ -52,6 +42,72 @@ internal static class SessionFactory
         var bag = contest.Bags.First();
 
         return (new SessionContext(remoteLabyrinth, remoteCrawler, bag, contest), null);
+    }
+
+    public static async Task<(RemoteTeamSessionContext? Session, string? Error)> TryCreateRemoteTeamAsync(LaunchArguments args)
+    {
+        if (!TryResolveRemoteArguments(args, out var appKey, out var settings, out var error))
+        {
+            return (null, error);
+        }
+
+        var contest = await ContestSession.Open(args.ServerUri!, appKey, settings);
+        var remoteLabyrinth = new Labyrinth(contest.Builder);
+
+        var strategies = ExplorerTeamStrategyFactory.CreateDefault().ToArray();
+        var sharedMap = new SharedLabyrinthMap();
+        var crawlers = new List<Laby.Core.Crawl.ICrawler>(strategies.Length);
+
+        for (var i = 0; i < strategies.Length; i++)
+        {
+            crawlers.Add(await contest.NewCrawler());
+        }
+
+        var bags = contest.Bags.Take(strategies.Length).ToArray();
+        var explorers = strategies
+            .Select((strategy, index) => new Explorer(crawlers[index], strategy, sharedMap))
+            .ToArray();
+
+        return (
+            new RemoteTeamSessionContext(
+                remoteLabyrinth,
+                contest,
+                explorers,
+                strategies,
+                bags,
+                sharedMap
+            ),
+            null
+        );
+    }
+
+    private static bool TryResolveRemoteArguments(
+        LaunchArguments args,
+        out Guid appKey,
+        out Dto.Settings? settings,
+        out string? error)
+    {
+        var appKeyValue = args.AppKeyText;
+        if (string.IsNullOrWhiteSpace(appKeyValue))
+        {
+            appKeyValue = UserSecretsReader.GetValue("Laby:AppKey");
+        }
+
+        if (!Guid.TryParse(appKeyValue, out appKey))
+        {
+            settings = null;
+            error = "Missing or invalid appKey. Provide it or set user secret \"Laby:AppKey\".";
+            return false;
+        }
+
+        settings = null;
+        if (!string.IsNullOrWhiteSpace(args.SettingsPath))
+        {
+            settings = JsonSerializer.Deserialize<Dto.Settings>(File.ReadAllText(args.SettingsPath));
+        }
+
+        error = null;
+        return true;
     }
 
     private static class UserSecretsReader

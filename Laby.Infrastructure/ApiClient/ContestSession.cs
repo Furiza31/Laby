@@ -140,19 +140,12 @@ namespace Laby.Infrastructure.ApiClient
                 {
                     for (var y = 0; y < Height; y++)
                     {
-                        if (int.IsOddInteger(x + y))
-                            Tiles[x, y] = new Unknown();
-                        else if (int.IsEvenInteger(Math.Min(
-                            Math.Min(x, Width  + 1 - x),
-                            Math.Min(y, Height + 1 - y)
-                        )))
-                            Tiles[x, y] = Wall.Singleton;
-                        else
-                            Tiles[x, y] = new Room();
+                        Tiles[x, y] = new Unknown();
                     }
                 }
 
                 var center = Height / 2;
+                Tiles[XStart, center] = new Room();
 
                 StartPositionFound?.Invoke(this, new StartEventArgs(XStart, center));
                 return Tiles;

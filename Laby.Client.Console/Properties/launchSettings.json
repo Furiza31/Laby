@@ -5,9 +5,14 @@
       "commandLineArgs": "local",
       "workingDirectory": "."
     },
-    "Laby.Client.Console (Remote)": {
+    "Laby.Client.Console (Remote labasse)": {
       "commandName": "Project",
       "commandLineArgs": "remote https://labyrinth.syllab.com",
+      "workingDirectory": "."
+    },
+    "Laby.Client.Console (Remote)": {
+      "commandName": "Project",
+      "commandLineArgs": "remote http://localhost:5000",
       "workingDirectory": "."
     }
   }
