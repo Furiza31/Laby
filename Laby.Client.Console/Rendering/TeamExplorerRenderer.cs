@@ -23,9 +23,9 @@ internal sealed class TeamExplorerRenderer
     private readonly ILabyrinthMapReader _sharedMap;
     private readonly int _maxMoves;
     private readonly char[,] _background;
-    private readonly Type[,] _observedTiles;
-    private readonly int _width;
-    private readonly int _height;
+    private Type[,] _observedTiles;
+    private int _width;
+    private int _height;
     private readonly int _observedLeft;
     private readonly bool _showLabyrinth;
     private readonly int _frameDelayMs;
@@ -196,6 +196,11 @@ internal sealed class TeamExplorerRenderer
 
     private void DrawSharedCell(int x, int y)
     {
+        if (!EnsureObservedBounds(x, y))
+        {
+            return;
+        }
+
         var singleExplorer = GetSingleExplorerOnCell(x, y, out var multipleExplorers);
         SysConsole.SetCursorPosition(_observedLeft + x, y + PanelTop);
         if (singleExplorer < 0)
@@ -226,7 +231,7 @@ internal sealed class TeamExplorerRenderer
         {
             var x = entry.Key.X;
             var y = entry.Key.Y;
-            if (!IsInsideBounds(x, y))
+            if (!EnsureObservedBounds(x, y))
             {
                 continue;
             }
@@ -338,6 +343,71 @@ internal sealed class TeamExplorerRenderer
 
     private bool IsInsideBounds(int x, int y) =>
         x >= 0 && x < _width && y >= 0 && y < _height;
+
+    private bool EnsureObservedBounds(int x, int y)
+    {
+        if (x < 0 || y < 0)
+        {
+            return false;
+        }
+
+        if (IsInsideBounds(x, y))
+        {
+            return true;
+        }
+
+        if (_showLabyrinth)
+        {
+            return false;
+        }
+
+        var oldWidth = _width;
+        var oldHeight = _height;
+        var newWidth = Math.Max(_width, x + 1);
+        var newHeight = Math.Max(_height, y + 1);
+        var resized = new Type[newWidth, newHeight];
+
+        for (var yy = 0; yy < newHeight; yy++)
+        {
+            for (var xx = 0; xx < newWidth; xx++)
+            {
+                resized[xx, yy] = typeof(Unknown);
+            }
+        }
+
+        for (var yy = 0; yy < oldHeight; yy++)
+        {
+            for (var xx = 0; xx < oldWidth; xx++)
+            {
+                resized[xx, yy] = _observedTiles[xx, yy];
+            }
+        }
+
+        _observedTiles = resized;
+        _width = newWidth;
+        _height = newHeight;
+        DrawUnknownSharedMapDelta(oldWidth, oldHeight);
+
+        return true;
+    }
+
+    private void DrawUnknownSharedMapDelta(int oldWidth, int oldHeight)
+    {
+        for (var y = 0; y < _height; y++)
+        {
+            for (var x = 0; x < _width; x++)
+            {
+                if (x < oldWidth && y < oldHeight)
+                {
+                    continue;
+                }
+
+                SysConsole.SetCursorPosition(_observedLeft + x, y + PanelTop);
+                SysConsole.ResetColor();
+                SysConsole.Write('?');
+            }
+        }
+    }
 
     private char TileToChar(int x, int y, Type tileType)
     {
