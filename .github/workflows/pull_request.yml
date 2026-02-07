@@ -54,13 +54,38 @@ jobs:
       - name: Build
         run: dotnet build Labyrinth.sln -c Release --no-restore
 
-      - name: Publish
-        run: dotnet publish ./Laby.Client.Console/Laby.Client.Console.csproj -c Release -o ./out --no-build
+      - name: Publish binaries (Client + Server, Linux + Windows)
+        run: |
+          set -euo pipefail
+
+          mkdir -p ./artifacts
+          rm -rf ./publish
+
+          targets=(
+            "Laby.Client.Console/Laby.Client.Console.csproj|laby-client-console|linux-x64"
+            "Laby.Client.Console/Laby.Client.Console.csproj|laby-client-console|win-x64"
+            "Laby.Server.Training/Laby.Server.Training.csproj|laby-server-training|linux-x64"
+            "Laby.Server.Training/Laby.Server.Training.csproj|laby-server-training|win-x64"
+          )
+
+          for target in "${targets[@]}"; do
+            IFS='|' read -r project app_name rid <<< "$target"
+            output_dir="./publish/${app_name}-${rid}"
+
+            dotnet publish "$project" \
+              -c Release \
+              -r "$rid" \
+              --self-contained false \
+              -p:UseAppHost=true \
+              -o "$output_dir"
+
+            (cd ./publish && zip -r "../artifacts/${app_name}-${rid}.zip" "${app_name}-${rid}")
+          done
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Labyrinth-${{ github.event.pull_request.merge_commit_sha }}
-          path: ./out
+          path: ./artifacts/*.zip
           if-no-files-found: error
           retention-days: 14
