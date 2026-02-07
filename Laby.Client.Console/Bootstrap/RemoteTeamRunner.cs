@@ -24,7 +24,9 @@ internal static class RemoteTeamRunner
             session.Strategies,
             session.SharedMap,
             session.Labyrinth,
-            MaxMoves
+            MaxMoves,
+            showLabyrinth: false,
+            frameDelayMs: 0
         );
 
         SysConsole.Clear();

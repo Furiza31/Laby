@@ -13,7 +13,7 @@ internal sealed class TeamExplorerRenderer
     private const int HeaderY = StatusLineCount;
     private const int PanelTop = HeaderY + 1;
     private const int PanelGap = 4;
-    private const int FrameDelayMs = 55;
+    private const int DefaultFrameDelayMs = 55;
 
     private readonly object _consoleLock = new();
     private readonly Explorer[] _explorers;
@@ -27,6 +27,8 @@ internal sealed class TeamExplorerRenderer
     private readonly int _width;
     private readonly int _height;
     private readonly int _observedLeft;
+    private readonly bool _showLabyrinth;
+    private readonly int _frameDelayMs;
 
     private static readonly ConsoleColor[] ExplorerColors =
     [
@@ -40,12 +42,16 @@ internal sealed class TeamExplorerRenderer
         IReadOnlyList<IExplorerStrategy> strategies,
         ILabyrinthMapReader sharedMap,
         Labyrinth labyrinth,
-        int maxMoves)
+        int maxMoves,
+        bool showLabyrinth = true,
+        int frameDelayMs = DefaultFrameDelayMs)
     {
         _explorers = explorers.ToArray();
         _strategies = strategies.ToArray();
         _sharedMap = sharedMap;
         _maxMoves = maxMoves;
+        _showLabyrinth = showLabyrinth;
+        _frameDelayMs = Math.Max(0, frameDelayMs);
 
         if (_explorers.Length != _strategies.Length)
         {
@@ -65,7 +71,7 @@ internal sealed class TeamExplorerRenderer
 
         (_background, _width, _height) = BuildBackground(labyrinth);
         _observedTiles = new Type[_width, _height];
-        _observedLeft = _width + PanelGap;
+        _observedLeft = _showLabyrinth ? _width + PanelGap : 0;
 
         for (var y = 0; y < _height; y++)
         {
@@ -90,12 +96,15 @@ internal sealed class TeamExplorerRenderer
             DrawAllStatusLines();
             DrawHeaders();
 
-            for (var y = 0; y < _height; y++)
+            if (_showLabyrinth)
             {
-                SysConsole.SetCursorPosition(0, y + PanelTop);
-                for (var x = 0; x < _width; x++)
+                for (var y = 0; y < _height; y++)
                 {
-                    SysConsole.Write(_background[x, y]);
+                    SysConsole.SetCursorPosition(0, y + PanelTop);
+                    for (var x = 0; x < _width; x++)
+                    {
+                        SysConsole.Write(_background[x, y]);
+                    }
                 }
             }
 
@@ -104,7 +113,10 @@ internal sealed class TeamExplorerRenderer
 
             for (var i = 0; i < _states.Length; i++)
             {
-                DrawCell(_states[i].X, _states[i].Y);
+                if (_showLabyrinth)
+                {
+                    DrawCell(_states[i].X, _states[i].Y);
+                }
                 DrawSharedCell(_states[i].X, _states[i].Y);
             }
 
@@ -140,13 +152,19 @@ internal sealed class TeamExplorerRenderer
                 previous.StepsTaken + 1
             );
 
-            DrawCell(previous.X, previous.Y);
-            DrawCell(args.X, args.Y);
+            if (_showLabyrinth)
+            {
+                DrawCell(previous.X, previous.Y);
+                DrawCell(args.X, args.Y);
+            }
             RefreshObservedMap();
             DrawSharedCell(previous.X, previous.Y);
             DrawSharedCell(args.X, args.Y);
             DrawStatusLine(index);
-            Thread.Sleep(FrameDelayMs);
+            if (_frameDelayMs > 0)
+            {
+                Thread.Sleep(_frameDelayMs);
+            }
             MoveCursorToTop();
         }
     }
@@ -237,8 +255,14 @@ internal sealed class TeamExplorerRenderer
 
     private void DrawHeaders()
     {
-        WriteLine(0, HeaderY, "Labyrinth");
-        WriteLine(_observedLeft, HeaderY, "Shared map (seen by explorers)");
+        if (_showLabyrinth)
+        {
+            WriteLine(0, HeaderY, "Labyrinth");
+            WriteLine(_observedLeft, HeaderY, "Shared map (seen by explorers)");
+            return;
+        }
+
+        WriteLine(0, HeaderY, "Shared map (seen by explorers)");
     }
 
     private void DrawAllStatusLines()
