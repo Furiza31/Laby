@@ -1,4 +1,4 @@
-﻿using Laby.Core.Build;
+using Laby.Core.Build;
 using Laby.Core.Crawl;
 using Laby.Core.Items;
 using Laby.Core.Tiles;
@@ -29,6 +29,47 @@ namespace Laby.Infrastructure.ApiClient
             return await CreateCrawler(http, appKey, settings) is Dto.Crawler crawlerDto 
                 ? new ContestSession(http, appKey, crawlerDto)
                 : throw new FormatException("Failed to read a crawler");
+        }
+
+        /// <summary>
+        /// Deletes all existing crawlers on the target server before starting a new remote session.
+        /// </summary>
+        /// <param name="serverUrl">Base URL of the server (http/https).</param>
+        /// <param name="appKey">App key used for DELETE operations.</param>
+        public static async Task DeleteAllCrawlersAsync(Uri serverUrl, Guid appKey)
+        {
+            using var http = new HttpClient() { BaseAddress = serverUrl };
+            Dto.Crawler[]? crawlers = null;
+            try
+            {
+                var response = await http.GetAsync($"/crawlers?appKey={appKey}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    return;
+                }
+                crawlers = await response.Content.ReadFromJsonAsync<Dto.Crawler[]>();
+            }
+            catch
+            {
+                return;
+            }
+
+            if (crawlers is null || crawlers.Length == 0)
+            {
+                return;
+            }
+
+            foreach (var c in crawlers)
+            {
+                try
+                {
+                    var del = await http.DeleteAsync($"/crawlers/{c.Id}?appKey={appKey}");
+                    _ = del.IsSuccessStatusCode;
+                }
+                catch
+                {
+                }
+            }
         }
 
         /// <summary>
