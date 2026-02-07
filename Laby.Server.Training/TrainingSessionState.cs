@@ -3,6 +3,7 @@ using Laby.Core.Build;
 using Laby.Core.Crawl;
 using Laby.Core.Items;
 using Laby.Core.Tiles;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Dto = Laby.Contracts;
 
@@ -12,6 +13,7 @@ public sealed class TrainingSessionState
 {
     private const int MaxCrawlerCount = 3;
 
+    [ActivatorUtilitiesConstructor]
     public TrainingSessionState() : this(TrainingLabyrinthCatalog.All)
     {
     }

@@ -25,6 +25,15 @@ public class TrainingSessionStateTest
         """;
 
     [Test]
+    public void DefaultCatalogCanBeLoaded()
+    {
+        Assert.That(
+            () => new TrainingSessionState(),
+            Throws.Nothing
+        );
+    }
+
+    [Test]
     public async Task CreateCrawlerReturnsInitialCrawlerState()
     {
         var test = NewSession(BlockedNorthMap);

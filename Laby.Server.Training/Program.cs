@@ -4,7 +4,7 @@ using Dto = Laby.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<TrainingSessionState>();
+builder.Services.AddSingleton(_ => new TrainingSessionState());
 
 var app = builder.Build();
 
