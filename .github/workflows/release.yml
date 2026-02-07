@@ -32,14 +32,33 @@ jobs:
       - name: Test (Release)
         run: dotnet test Labyrinth.sln -c Release --no-build --verbosity normal
 
-      - name: Publish
-        run: dotnet publish ./Laby.Client.Console/Laby.Client.Console.csproj -c Release -o ./out --no-build
-
-      - name: Create zip
+      - name: Publish binaries (Client + Server, Linux + Windows)
         run: |
-          cd out
-          zip -r ../Labyrinth.zip .
-          cd ..
+          set -euo pipefail
+
+          mkdir -p ./artifacts
+          rm -rf ./publish
+
+          targets=(
+            "Laby.Client.Console/Laby.Client.Console.csproj|laby-client-console|linux-x64"
+            "Laby.Client.Console/Laby.Client.Console.csproj|laby-client-console|win-x64"
+            "Laby.Server.Training/Laby.Server.Training.csproj|laby-server-training|linux-x64"
+            "Laby.Server.Training/Laby.Server.Training.csproj|laby-server-training|win-x64"
+          )
+
+          for target in "${targets[@]}"; do
+            IFS='|' read -r project app_name rid <<< "$target"
+            output_dir="./publish/${app_name}-${rid}"
+
+            dotnet publish "$project" \
+              -c Release \
+              -r "$rid" \
+              --self-contained false \
+              -p:UseAppHost=true \
+              -o "$output_dir"
+
+            (cd ./publish && zip -r "../artifacts/${app_name}-${rid}.zip" "${app_name}-${rid}")
+          done
 
       - name: Create GitHub Release (tag + release)
         env:
@@ -47,6 +66,6 @@ jobs:
         run: |
           SHORT_SHA="${GITHUB_SHA::7}"
           TAG="build-${SHORT_SHA}"
-          gh release create "$TAG" "Labyrinth.zip" \
+          gh release create "$TAG" artifacts/*.zip \
             --title "Labyrinth $TAG" \
             --notes "Automated release from commit $GITHUB_SHA"
