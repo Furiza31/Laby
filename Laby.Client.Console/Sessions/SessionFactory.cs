@@ -36,6 +36,7 @@ internal static class SessionFactory
             return (null, error);
         }
 
+        await ContestSession.DeleteAllCrawlersAsync(args.ServerUri!, appKey);
         var contest = await ContestSession.Open(args.ServerUri!, appKey, settings);
         var remoteLabyrinth = new Labyrinth(contest.Builder);
         var remoteCrawler = await contest.NewCrawler();
@@ -51,6 +52,7 @@ internal static class SessionFactory
             return (null, error);
         }
 
+        await ContestSession.DeleteAllCrawlersAsync(args.ServerUri!, appKey);
         var contest = await ContestSession.Open(args.ServerUri!, appKey, settings);
         var remoteLabyrinth = new Labyrinth(contest.Builder);
 
