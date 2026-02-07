@@ -3,6 +3,7 @@ using Laby.Core;
 using Laby.Core.Crawl;
 using Laby.Core.Tiles;
 using Laby.Infrastructure.ApiClient;
+using Laby.Client.Console.Common;
 using SysConsole = System.Console;
 
 namespace Laby.Client.Console.Rendering;
@@ -35,14 +36,19 @@ internal sealed class ExplorerRenderer
 
     public void DrawLabyrinth(Labyrinth labyrinth)
     {
-        SysConsole.SetCursorPosition(0, OffsetY);
-        SysConsole.WriteLine(labyrinth);
+        if (!ViewportGuard.CanRender(width: labyrinth.ToString().Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries)[0].Length, height: OffsetY + 1, startX: 0, startY: OffsetY))
+        {
+            ViewportGuard.ShowTooSmallMessage();
+            return;
+        }
+        SafeConsole.TrySetCursorPosition(0, OffsetY);
+        SafeConsole.TryWriteLine(labyrinth.ToString());
     }
 
     private void OnPositionChanged(object? sender, CrawlingEventArgs e)
     {
-        SysConsole.SetCursorPosition(_prevX, _prevY);
-        SysConsole.Write(' ');
+        SafeConsole.TrySetCursorPosition(_prevX, _prevY);
+        SafeConsole.TryWrite(" ");
         DrawExplorer(sender, e);
         (_prevX, _prevY) = (e.X, e.Y + OffsetY);
     }
@@ -54,19 +60,19 @@ internal sealed class ExplorerRenderer
 
         if (facingTileType != typeof(Outside))
         {
-            SysConsole.SetCursorPosition(
+            SafeConsole.TrySetCursorPosition(
                 e.X + e.Direction.DeltaX,
                 e.Y + e.Direction.DeltaY + OffsetY
             );
-            SysConsole.Write(_tileToChar[facingTileType]);
+            SafeConsole.TryWrite(_tileToChar[facingTileType].ToString());
         }
 
-        SysConsole.SetCursorPosition(e.X, e.Y + OffsetY);
-        SysConsole.Write(DirToChar(e.Direction));
-        SysConsole.SetCursorPosition(0, 0);
+        SafeConsole.TrySetCursorPosition(e.X, e.Y + OffsetY);
+        SafeConsole.TryWrite(DirToChar(e.Direction).ToString());
+        SafeConsole.TrySetCursorPosition(0, 0);
         if (crawler is ClientCrawler cc)
         {
-            SysConsole.WriteLine($"Bag : {cc.Bag.ItemTypes.Count()} item(s)");
+            SafeConsole.TryWriteLine($"Bag : {cc.Bag.ItemTypes.Count()} item(s)");
         }
         Thread.Sleep(100);
     }

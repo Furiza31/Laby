@@ -3,6 +3,7 @@ using Laby.Core;
 using Laby.Core.Crawl;
 using Laby.Core.Mapping;
 using Laby.Core.Tiles;
+using Laby.Client.Console.Common;
 using SysConsole = System.Console;
 
 namespace Laby.Client.Console.Rendering;
@@ -93,6 +94,13 @@ internal sealed class TeamExplorerRenderer
         lock (_consoleLock)
         {
             SysConsole.Clear();
+            var requiredWidth = (_showLabyrinth ? _width : 0) + (_showLabyrinth ? PanelGap : 0) + _width;
+            var requiredHeight = PanelTop + _height + 1;
+            if (!ViewportGuard.CanRender(requiredWidth, requiredHeight))
+            {
+                ViewportGuard.ShowTooSmallMessage();
+                return;
+            }
             DrawAllStatusLines();
             DrawHeaders();
 
@@ -100,10 +108,10 @@ internal sealed class TeamExplorerRenderer
             {
                 for (var y = 0; y < _height; y++)
                 {
-                    SysConsole.SetCursorPosition(0, y + PanelTop);
+                    SafeConsole.TrySetCursorPosition(0, y + PanelTop);
                     for (var x = 0; x < _width; x++)
                     {
-                        SysConsole.Write(_background[x, y]);
+                        SafeConsole.TryWrite(_background[x, y].ToString());
                     }
                 }
             }
@@ -129,8 +137,8 @@ internal sealed class TeamExplorerRenderer
         lock (_consoleLock)
         {
             var footer = Math.Min(PanelTop + _height + 1, SysConsole.BufferHeight - 1);
-            SysConsole.SetCursorPosition(0, Math.Max(0, footer));
-            SysConsole.ResetColor();
+            SafeConsole.TrySetCursorPosition(0, Math.Max(0, footer));
+            SafeConsole.ResetColorSafely();
         }
     }
 
@@ -172,26 +180,26 @@ internal sealed class TeamExplorerRenderer
     private void DrawCell(int x, int y)
     {
         var singleExplorer = GetSingleExplorerOnCell(x, y, out var multipleExplorers);
-        SysConsole.SetCursorPosition(x, y + PanelTop);
+        SafeConsole.TrySetCursorPosition(x, y + PanelTop);
         if (singleExplorer < 0)
         {
-            SysConsole.ResetColor();
-            SysConsole.Write(_background[x, y]);
+            SafeConsole.ResetColorSafely();
+            SafeConsole.TryWrite(_background[x, y].ToString());
             return;
         }
 
         if (multipleExplorers)
         {
-            SysConsole.ForegroundColor = ConsoleColor.Magenta;
-            SysConsole.Write('*');
-            SysConsole.ResetColor();
+            SafeConsole.SetForegroundColorSafely(ConsoleColor.Magenta);
+            SafeConsole.TryWrite("*");
+            SafeConsole.ResetColorSafely();
             return;
         }
 
         var explorerId = singleExplorer;
-        SysConsole.ForegroundColor = ExplorerColors[explorerId % ExplorerColors.Length];
-        SysConsole.Write(DirectionToChar(_states[explorerId].Direction));
-        SysConsole.ResetColor();
+        SafeConsole.SetForegroundColorSafely(ExplorerColors[explorerId % ExplorerColors.Length]);
+        SafeConsole.TryWrite(DirectionToChar(_states[explorerId].Direction).ToString());
+        SafeConsole.ResetColorSafely();
     }
 
     private void DrawSharedCell(int x, int y)
@@ -202,26 +210,26 @@ internal sealed class TeamExplorerRenderer
         }
 
         var singleExplorer = GetSingleExplorerOnCell(x, y, out var multipleExplorers);
-        SysConsole.SetCursorPosition(_observedLeft + x, y + PanelTop);
+        SafeConsole.TrySetCursorPosition(_observedLeft + x, y + PanelTop);
         if (singleExplorer < 0)
         {
-            SysConsole.ResetColor();
-            SysConsole.Write(TileToChar(x, y, _observedTiles[x, y]));
+            SafeConsole.ResetColorSafely();
+            SafeConsole.TryWrite(TileToChar(x, y, _observedTiles[x, y]).ToString());
             return;
         }
 
         if (multipleExplorers)
         {
-            SysConsole.ForegroundColor = ConsoleColor.Magenta;
-            SysConsole.Write('*');
-            SysConsole.ResetColor();
+            SafeConsole.SetForegroundColorSafely(ConsoleColor.Magenta);
+            SafeConsole.TryWrite("*");
+            SafeConsole.ResetColorSafely();
             return;
         }
 
         var explorerId = singleExplorer;
-        SysConsole.ForegroundColor = ExplorerColors[explorerId % ExplorerColors.Length];
-        SysConsole.Write(DirectionToChar(_states[explorerId].Direction));
-        SysConsole.ResetColor();
+        SafeConsole.SetForegroundColorSafely(ExplorerColors[explorerId % ExplorerColors.Length]);
+        SafeConsole.TryWrite(DirectionToChar(_states[explorerId].Direction).ToString());
+        SafeConsole.ResetColorSafely();
     }
 
     private void RefreshObservedMap()
@@ -250,10 +258,10 @@ internal sealed class TeamExplorerRenderer
     {
         for (var y = 0; y < _height; y++)
         {
-            SysConsole.SetCursorPosition(_observedLeft, y + PanelTop);
+            SafeConsole.TrySetCursorPosition(_observedLeft, y + PanelTop);
             for (var x = 0; x < _width; x++)
             {
-                SysConsole.Write('?');
+                SafeConsole.TryWrite("?");
             }
         }
     }
@@ -284,9 +292,9 @@ internal sealed class TeamExplorerRenderer
         var mode = ResolveMode(index);
         var status = $"Explorer #{index + 1}: remaining={remaining}, mode={mode}";
 
-        SysConsole.ForegroundColor = ExplorerColors[index % ExplorerColors.Length];
+        SafeConsole.SetForegroundColorSafely(ExplorerColors[index % ExplorerColors.Length]);
         WriteLine(0, index, status, clearLine: true);
-        SysConsole.ResetColor();
+        SafeConsole.ResetColorSafely();
     }
 
     private string ResolveMode(int index) =>
@@ -296,8 +304,8 @@ internal sealed class TeamExplorerRenderer
 
     private static void WriteLine(int x, int y, string text, bool clearLine = false)
     {
-        SysConsole.SetCursorPosition(x, y);
-        var remainingWidth = Math.Max(0, SysConsole.BufferWidth - x - 1);
+        SafeConsole.TrySetCursorPosition(x, y);
+        var remainingWidth = Math.Max(0, SafeConsole.BufferWidthSafely - x - 1);
         if (remainingWidth == 0)
         {
             return;
@@ -305,17 +313,17 @@ internal sealed class TeamExplorerRenderer
 
         if (text.Length > remainingWidth)
         {
-            SysConsole.Write(text[..remainingWidth]);
+            SafeConsole.TryWrite(text[..remainingWidth]);
             return;
         }
 
         if (clearLine)
         {
-            SysConsole.Write(text.PadRight(remainingWidth));
+            SafeConsole.TryWritePadded(text, remainingWidth);
             return;
         }
 
-        SysConsole.Write(text);
+        SafeConsole.TryWrite(text);
     }
 
     private int GetSingleExplorerOnCell(int x, int y, out bool multipleExplorers)
@@ -401,10 +409,9 @@ internal sealed class TeamExplorerRenderer
                 {
                     continue;
                 }
-
-                SysConsole.SetCursorPosition(_observedLeft + x, y + PanelTop);
-                SysConsole.ResetColor();
-                SysConsole.Write('?');
+                SafeConsole.TrySetCursorPosition(_observedLeft + x, y + PanelTop);
+                SafeConsole.ResetColorSafely();
+                SafeConsole.TryWrite("?");
             }
         }
     }
@@ -435,7 +442,7 @@ internal sealed class TeamExplorerRenderer
     }
 
     private static void MoveCursorToTop() =>
-        SysConsole.SetCursorPosition(0, 0);
+        SafeConsole.TrySetCursorPosition(0, 0);
 
     private static (char[,] Grid, int Width, int Height) BuildBackground(Labyrinth labyrinth)
     {
