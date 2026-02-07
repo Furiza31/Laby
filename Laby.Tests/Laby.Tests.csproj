@@ -22,6 +22,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="NUnit" Version="4.4.0" />
     <PackageReference Include="NUnit.Analyzers" Version="4.11.2">
@@ -39,6 +40,8 @@
     <ProjectReference Include="..\Laby.Core\Laby.Core.csproj" />
     <ProjectReference Include="..\Laby.Algorithms\Laby.Algorithms.csproj" />
     <ProjectReference Include="..\Laby.Mapping\Laby.Mapping.csproj" />
+    <ProjectReference Include="..\Laby.Contracts\Laby.Contracts.csproj" />
+    <ProjectReference Include="..\Laby.Server.Training\Laby.Server.Training.csproj" />
   </ItemGroup>
 
 </Project>
